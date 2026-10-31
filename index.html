@@ -209,7 +209,7 @@ footer a{color:var(--brown)}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-7</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-8</span>
   </footer>
 </div>
 
@@ -446,11 +446,6 @@ function renderEvInfo(){
     <div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary||'')}</div>
     ${isFinite(a)?`<div style="margin-top:6px">교회 주변(도심) 통제: <b>${hm(a)} ~ ${hm(b)}</b></div>`:''}
     ${e.pending?'<div class="pending">※ 구간별 세부 통제 시간이 아직 발표되지 않았어요. 발표되면 업데이트됩니다.</div>':''}
-    <div class="seglist">
-      <div class="seg-h">교회 주변 통제 구간</div>
-      ${e.segs.filter(x=>!x.outer).map(x=>`<div class="seg-i"><span>${esc(x.name)}</span><b>${x.from}~${x.to}${x.est?' (추정)':''}</b></div>`).join('')||'<div class="seg-i"><span>발표 대기</span></div>'}
-      ${e.segs.some(x=>x.outer)?`<div class="seg-h" style="margin-top:10px">교회와 먼 구간</div>${e.segs.filter(x=>x.outer).map(x=>`<div class="seg-i"><span>${esc(x.name)}</span><b>${x.from}~${x.to}${x.est?' (추정)':''}</b></div>`).join('')}`:''}
-    </div>
     <button class="btn ghost" type="button" id="evMapBtn" style="margin-top:12px;background:#fff">🗺 통제 구간 지도로 보기</button>
     <div id="evMapWrap" class="hidden">
       <div class="maptabs"><button class="chip on" data-ev="ct" type="button">교회 주변</button><button class="chip" data-ev="ov" type="button">서울 전체</button></div>
