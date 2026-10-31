@@ -133,6 +133,7 @@ body.leaf .svgonly{display:none!important}
 .lab.ch span{border-color:#7A4E2D;color:#7A4E2D;font-size:12px}
 .lowz .lab.inner{display:none}
 .leaflet-container{font-family:"Noto Sans KR",sans-serif}
+.osm-soft{filter:saturate(.55) sepia(.12) brightness(1.03)}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -224,7 +225,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-12</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-13</span>
   </footer>
 </div>
 
@@ -486,7 +487,7 @@ function segLL(sg){ const out=[]; (sg.edges||[]).forEach(id=>{ if(EMAP[id]) out.
 function routeLL(r){ const all=[]; r.edges.forEach((id,i)=>{ const e=EMAP[id]; let p=e.pts.slice(); if(e.a!==r.nodes[i]) p.reverse(); p.forEach(x=>all.push(x)); }); return all; }
 function lmake(id){
   const map=L.map(id,{scrollWheelZoom:false,zoomSnap:0.5}); map.attributionControl.setPrefix(false);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:'osm-soft',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
   map.setView(CH,13);
   map.on('zoomend',()=>{ map.getContainer().classList.toggle('lowz',map.getZoom()<12.5); declutter(map); });
   return map;
@@ -499,7 +500,7 @@ function declutter(map){
     if(hit) sp.style.visibility='hidden'; else kept.push(r); });
 }
 function lmap(id){ if(!MAPS[id]){ MAPS[id]={map:lmake(id),layer:null}; } const m=MAPS[id]; if(m.layer) m.layer.remove(); m.layer=L.layerGroup().addTo(m.map); setTimeout(()=>m.map.invalidateSize(),0); return m; }
-const icoCh=()=>L.divIcon({className:'pin-ch',html:'<div>✝</div>',iconSize:[30,30],iconAnchor:[15,15]});
+const icoCh=()=>L.divIcon({className:'pin-ch',html:'<div><svg width="14" height="16" viewBox="0 0 14 16"><path d="M7 1v14M2 5.5h10" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg></div>',iconSize:[30,30],iconAnchor:[15,15]});
 const icoSt=()=>L.divIcon({className:'pin-st',html:'<div></div>',iconSize:[20,20],iconAnchor:[10,10]});
 const icoLab=(t,cls)=>L.divIcon({className:'lab '+(cls||''),html:'<span>'+esc(t)+'</span>',iconSize:[0,0]});
 function lClosures(layer,ev,isOn,withLabels){
