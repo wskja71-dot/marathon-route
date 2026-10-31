@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마라톤 날, 종교교회 오는 길</title>
+<meta name="description" content="마라톤 교통통제를 피해 종교교회로 오는 가장 빠른 길을 알려 드려요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="마라톤 날, 종교교회 오는 길">
+<meta property="og:description" content="통제 구간을 피해 교회로 들어오는 길 · 내 위치에서 바로 길안내">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5EFE5; --card:#FFFCF7; --ink:#3A2E24; --muted:#8B7B69; --line:#E7DCCB;
+  --sand:#EADFCB; --apricot:#E8956B; --apricot-soft:#FBE7DA; --brown:#7A4E2D;
+  --route:#2E7D74; --route-soft:#DCEFEA; --stop:#D2544A; --stop-soft:#F8DEDA;
+  --r:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{line-height:1.55;font-size:16px}
+.wrap{max-width:600px;margin:0 auto;padding:22px 16px 60px}
+header h1{font-size:25px;line-height:1.3;margin:4px 0 6px;font-weight:800;letter-spacing:-0.02em}
+header .sub{color:var(--muted);font-size:14.5px}
+.eyebrow{display:inline-block;font-size:12.5px;font-weight:700;color:var(--brown);background:var(--sand);padding:4px 11px;border-radius:999px}
+.card{background:var(--card);border-radius:var(--r);padding:20px 18px;margin-top:16px;box-shadow:0 1px 0 rgba(122,78,45,.06),0 6px 22px -14px rgba(122,78,45,.35)}
+.card h2{font-size:17px;margin:0 0 12px;font-weight:800;letter-spacing:-0.01em}
+.step{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--apricot);color:#fff;font-size:13px;font-weight:800;margin-right:8px;vertical-align:1px}
+label.lbl{display:block;font-size:13.5px;color:var(--muted);margin:14px 0 6px;font-weight:500}
+select,input[type=time],input[type=text],input[type=date]{width:100%;font:inherit;font-size:17px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);appearance:none;-webkit-appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 22px,calc(100% - 14px) 22px;background-size:6px 6px;background-repeat:no-repeat;padding-right:38px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 15px;font:inherit;font-size:15px;color:var(--ink);cursor:pointer}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:inherit;font-size:18px;font-weight:800;background:var(--route);color:#fff;cursor:pointer;margin-top:18px;text-align:center;text-decoration:none}
+.btn.alt{background:#FEE500;color:#191600}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);font-size:15px;font-weight:700;padding:12px}
+.row{display:flex;gap:10px;align-items:center}
+.row > *{flex:1}
+.evbox{border-radius:16px;background:var(--apricot-soft);padding:14px 15px;margin-top:12px;font-size:14.5px}
+.evbox b{font-size:15.5px}
+.evbox .badge{display:inline-block;background:var(--apricot);color:#fff;border-radius:999px;font-size:12px;font-weight:800;padding:2px 9px;margin-left:6px;vertical-align:2px}
+.pending{margin-top:8px;color:var(--brown);font-size:13.5px}
+.result-head{font-size:21px;font-weight:800;line-height:1.4;letter-spacing:-0.02em;margin:2px 0 8px}
+.result-head em{font-style:normal;color:var(--route)}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+.pill{font-size:13.5px;border-radius:999px;padding:5px 12px;background:var(--route-soft);color:#1f5852;font-weight:700}
+.pill.warn{background:var(--stop-soft);color:#9b2f27}
+.pill.mut{background:var(--sand);color:var(--brown)}
+ol.path{list-style:none;padding:0;margin:14px 0 0;position:relative}
+ol.path li{position:relative;padding:0 0 14px 28px;font-size:15.5px}
+ol.path li:before{content:"";position:absolute;left:7px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--route)}
+ol.path li:after{content:"";position:absolute;left:11px;top:20px;bottom:-6px;width:2px;background:var(--route-soft)}
+ol.path li:last-child:after{display:none}
+ol.path li:last-child:before{background:var(--brown);width:12px;height:12px;left:6px}
+ol.path li small{display:block;color:var(--muted);font-size:13px}
+.avoid{margin-top:12px;background:var(--stop-soft);border-radius:14px;padding:12px 14px;font-size:14.5px;color:#7d2a22}
+.avoid b{color:#9b2f27}
+.mapbox{margin-top:14px;border-radius:18px;overflow:hidden;background:#F3ECDF;border:1px solid var(--line);position:relative}
+.mapbox svg{display:block;width:100%;height:auto;touch-action:manipulation}
+.maptabs{display:flex;gap:6px;margin-top:14px}
+.maptabs .chip{font-size:14px;padding:7px 13px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:20px;height:5px;border-radius:3px;vertical-align:middle;margin-right:5px}
+.alts{margin-top:14px}
+.alt-item{border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;margin-top:8px;cursor:pointer;background:#fff}
+.alt-item.on{border-color:var(--route);background:var(--route-soft)}
+.alt-item .t{font-weight:700;font-size:15px}
+.alt-item .d{font-size:13px;color:var(--muted)}
+.tl{margin-top:6px}
+.tl-row{display:grid;grid-template-columns:1fr;gap:4px;padding:10px 0;border-top:1px solid var(--line)}
+.tl-row:first-child{border-top:0}
+.tl-name{font-size:14.5px;font-weight:700}
+.tl-name small{font-weight:500;color:var(--muted);margin-left:6px;font-size:12.5px}
+.tl-bar{position:relative;height:12px;border-radius:6px;background:var(--sand)}
+.tl-bar span{position:absolute;top:0;bottom:0;border-radius:6px;background:var(--stop)}
+.tl-bar span.est{background:repeating-linear-gradient(45deg,var(--stop),var(--stop) 5px,#e48a80 5px,#e48a80 10px)}
+.tl-bar .now{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.tl-time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tl-axis{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:4px}
+.tl-row.active .tl-name{color:#9b2f27}
+.note{font-size:13.5px;color:var(--muted);margin-top:12px}
+.note a{color:var(--brown)}
+.tip{display:flex;gap:12px;align-items:flex-start;font-size:14.5px}
+.tip .ico{flex:none;width:38px;height:38px;border-radius:12px;background:var(--sand);display:flex;align-items:center;justify-content:center;font-size:19px}
+.tip + .tip{margin-top:14px}
+.hidden{display:none!important}
+.pickhint{font-size:13.5px;color:var(--route);font-weight:700;margin-top:8px}
+footer{font-size:12.5px;color:var(--muted);margin-top:28px;line-height:1.7}
+footer a{color:var(--brown)}
+/* admin */
+.adm h3{font-size:15px;margin:18px 0 8px}
+.seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
+.seg-row .row{margin-top:6px}
+.seg-row input[type=time]{font-size:15px;padding:9px 10px}
+.seg-row select{font-size:15px;padding:10px 34px 10px 12px;background-position:calc(100% - 18px) 18px,calc(100% - 12px) 18px}
+.xbtn{flex:0 0 auto!important;border:0;background:var(--stop-soft);color:#9b2f27;border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.msg{margin-top:10px;font-size:14px;font-weight:700}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">종교교회 · 주일 교통 안내</span>
+    <h1>마라톤 날,<br>교회 오는 가장 빠른 길</h1>
+    <div class="sub">출발 지역과 도착 시각만 고르면, 통제 구간을 피해 들어오는 길을 알려 드려요.</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="step">1</span>어느 대회인가요?</h2>
+    <select id="evSel"></select>
+    <div id="evInfo" class="evbox"></div>
+  </section>
+
+  <section class="card">
+    <h2><span class="step">2</span>어디서 출발하세요?</h2>
+    <button class="btn" id="geoBtn" type="button" style="margin:0 0 12px;background:var(--apricot)">📍 지금 내 위치에서 출발</button>
+    <div class="msg hidden" id="geoMsg"></div>
+    <label class="lbl">또는 출발 지역 고르기</label>
+    <select id="regionSel"></select>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" id="pickBtn" type="button" style="margin:0">지도에서 직접 찍기</button>
+    </div>
+    <div id="pickWrap" class="hidden">
+      <div class="pickhint">아래 지도에서 출발 위치를 눌러 주세요. (도심 안이면 '도심 지도'에서 찍으면 더 정확해요)</div>
+      <div class="maptabs"><button class="chip on" data-pk="ov" type="button">서울 전체</button><button class="chip" data-pk="ct" type="button">도심 지도</button></div>
+      <div class="mapbox"><svg id="pickMap"></svg></div>
+    </div>
+
+    <h2 style="margin-top:22px"><span class="step">3</span>몇 시까지 도착하실 건가요?</h2>
+    <div class="chips" id="timeChips"></div>
+    <div class="row" style="margin-top:10px">
+      <input type="time" id="arrTime" value="09:30" step="300">
+    </div>
+
+    <button class="btn" id="goBtn" type="button">길 찾기</button>
+  </section>
+
+  <section class="card hidden" id="resultCard">
+    <div id="resultBody"></div>
+    <div class="maptabs"><button class="chip on" data-mv="route" type="button">교회 주변</button><button class="chip" data-mv="all" type="button">도심 전체</button><button class="chip" data-mv="ov" type="button">서울 전체</button></div>
+    <div class="mapbox"><svg id="map"></svg></div>
+    <div class="legend">
+      <span><i style="background:var(--route)"></i>추천 길</span>
+      <span><i style="background:var(--stop)"></i>이 시간 통제</span>
+      <span><i style="background:#E8B4AC"></i>다른 시간 통제</span>
+    </div>
+    <a class="btn alt" id="kakaoBtn" href="#" target="_blank" rel="noopener">카카오맵으로 길안내 시작</a>
+    <div class="note" id="kakaoNote"></div>
+    <div class="alts" id="alts"></div>
+  </section>
+
+  <section class="card" id="tlCard">
+    <h2>통제 시간 한눈에 보기</h2>
+    <div id="timeline"></div>
+    <div class="note" id="srcNote"></div>
+  </section>
+
+  <section class="card">
+    <h2>교우들과 나누기</h2>
+    <div class="note" style="margin-top:0">이 링크를 카카오톡 단톡방에 올려 주세요. 누구나 바로 열 수 있어요.</div>
+    <button class="btn ghost" id="shareBtn" type="button">🔗 링크 공유하기</button>
+    <div class="msg" id="shareMsg"></div>
+  </section>
+
+  <section class="card">
+    <h2>함께 알아 두세요</h2>
+    <div class="tip"><div class="ico">🚇</div><div><b>지하철이 가장 확실해요.</b><br>광화문역(5호선)·경복궁역(3호선)에서 걸어서 5분 안팎입니다. 마라톤 날에도 지하철은 정상 운행해요.</div></div>
+    <div class="tip"><div class="ico">🚌</div><div><b>버스는 우회·무정차가 많아요.</b><br>세종문화회관·시청앞 정류소는 대회 중 서지 않을 수 있어요. 문의는 120 다산콜센터.</div></div>
+    <div class="tip"><div class="ico">📱</div><div><b>당일 실시간 통제</b>는 카카오톡 '서울경찰교통정보' 채널, 서울경찰청 교통정보센터(spatic.go.kr)에서 확인할 수 있어요.</div></div>
+  </section>
+
+
+  <footer>
+    예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)
+  </footer>
+</div>
+
+<script id="app-data" type="application/json">{"version":1,"events":[{"id":"jtbc2026","name":"2026 JTBC 서울마라톤","date":"2026-11-01","summary":"풀코스: 광화문광장 07:30 출발 → 숭례문·을지로·청계천·종로 → 신설동·군자·잠실 → 올림픽공원 / 10km: 상암 → 여의도","sources":[{"t":"서울시 교통통제 안내","u":"https://news.seoul.go.kr/culture/archives/535099"},{"t":"서울경찰청 발표 (뉴스1)","u":"https://www.news1.kr/society/incident-accident/6338189"}],"segs":[{"name":"세종대로 (광화문~숭례문) · 집결·출발지","edges":["ghm-sjr","sjr-cth","cth-srm"],"from":"04:00","to":"10:00"},{"name":"광화문 삼거리 횡단 (사직로↔율곡로)","nodes":["ghm"],"from":"07:20","to":"08:18","est":true,"note":"출발 시간대 '광화문광장 07:20~08:18 통제'에 따라 횡단이 막힐 수 있어 보수적으로 반영"},{"name":"남대문로·을지로 (숭례문~을지로~대림상가)","edges":["srm-bok","bok-ej1","cth-ej1","ej1-ej2","ej2-ej3","ej3-ej4"],"from":"07:46","to":"10:29"},{"name":"청계천로 (모전교~고산자교 왕복)","poly":[[37.5693,126.979],[37.569,126.988],[37.5692,126.996],[37.57,127.006],[37.5712,127.015],[37.5728,127.03]],"from":"07:46","to":"10:29"},{"name":"종로 (종로1가~동대문)","edges":["sjr-jg","jg-j2","j2-j3","j3-j4","j4-j5","j5-hij"],"from":"07:46","to":"10:29"},{"name":"왕산로 (동대문~신설동)","edges":["hij-ssd"],"from":"07:50","to":"10:50","est":true},{"name":"천호대로 (신설동~군자역)","poly":[[37.5753,127.0248],[37.572,127.045],[37.564,127.064],[37.5572,127.0795]],"from":"07:54","to":"11:30","est":true,"outer":true},{"name":"군자역~건대입구~자양","poly":[[37.5572,127.0795],[37.548,127.0745],[37.5404,127.07],[37.5345,127.0825]],"from":"08:05","to":"12:00","est":true,"outer":true},{"name":"잠실대교~석촌호수","poly":[[37.5345,127.0825],[37.52,127.092],[37.511,127.098],[37.5085,127.1005]],"from":"08:15","to":"12:30","est":true,"outer":true},{"name":"석촌호수~학원사거리~학여울~수서IC","poly":[[37.5085,127.1005],[37.504,127.082],[37.4993,127.0637],[37.4966,127.0711],[37.488,127.1]],"from":"08:25","to":"13:20","est":true,"outer":true},{"name":"수서IC~올림픽공원 (도착)","poly":[[37.488,127.1],[37.5,127.115],[37.516,127.121]],"from":"09:10","to":"13:54","outer":true},{"name":"10km: 상암~합정~양화대교~여의도공원","poly":[[37.5683,126.8972],[37.556,126.905],[37.5496,126.9139],[37.542,126.905],[37.534,126.903],[37.527,126.915],[37.526,126.923],[37.531,126.933]],"from":"05:00","to":"11:00","outer":true}]},{"id":"mbn2026","name":"2026 MBN 서울마라톤 (하프)","date":"2026-11-15","summary":"하프: 광화문광장 07:30 출발 → 잠실종합운동장 도착 · 통제 해제 10:30 예정","pending":true,"sources":[{"t":"MBN 서울마라톤 대회 안내","u":"https://www.mbn-seoulmarathon.com/"}],"segs":[{"name":"세종대로 (광화문~시청) · 출발지","edges":["ghm-sjr","sjr-cth"],"from":"05:00","to":"08:40","est":true}]}]}</script>
+
+<script>
+(function(){
+"use strict";
+/* ---------- 원본 문서(저장용) ---------- */
+
+/* ---------- 도로망 (교회 주변 도심) ---------- */
+const NODES = {
+ ch:['종교교회',37.5733,126.9746], s8:['사직로8길 입구',37.5757,126.9748], sm5:['새문안로5길 입구',37.5707,126.9754],
+ ghm:['광화문 삼거리',37.5758,126.9768], dsg:['동십자각',37.5764,126.9800], ag:['안국역 사거리',37.5765,126.9856],
+ dhm:['돈화문 앞',37.5768,126.9910], wn:['원남동 사거리',37.5750,126.9975], ih:['이화 사거리',37.5760,127.0030],
+ hij:['동대문',37.5712,127.0095], ssd:['신설동 오거리',37.5753,127.0248], gbg:['경복궁역 사거리',37.5758,126.9733],
+ sjd:['사직단 앞',37.5758,126.9688], dnm:['독립문',37.5728,126.9598], sjr:['세종대로 사거리',37.5711,126.9768],
+ cth:['시청 앞',37.5663,126.9779], srm:['숭례문',37.5600,126.9753], bok:['한국은행 앞',37.5610,126.9810],
+ ej1:['을지로입구',37.5660,126.9822], ej2:['을지로2가',37.5661,126.9880], ej3:['을지로3가',37.5662,126.9925],
+ ej4:['을지로4가',37.5666,126.9978], ddp:['동대문역사문화공원',37.5655,127.0075], jg:['종각',37.5702,126.9828],
+ j2:['종로2가',37.5703,126.9878], j3:['종로3가',37.5705,126.9920], j4:['종로4가',37.5707,126.9978], j5:['종로5가',37.5709,127.0018],
+ ghg:['경희궁 앞',37.5704,126.9700], sdm:['서대문 사거리',37.5659,126.9667], cjr:['충정로역',37.5600,126.9637],
+ ah:['아현',37.5573,126.9560], sst:['서울역',37.5555,126.9718], hh:['회현(남산3호터널)',37.5585,126.9790],
+ md:['명동역 사거리',37.5608,126.9865], cm:['충무로',37.5612,126.9945], ns1:['남산1호터널',37.5560,126.9885],
+ hj:['홍제',37.5890,126.9440], ght:['금화터널(신촌 방면)',37.5665,126.9500], cw:['청운동',37.5850,126.9688],
+ jhm:['자하문터널',37.5925,126.9655], sgj:['세검정',37.6015,126.9605], sc:['삼청동',37.5860,126.9822],
+ sct:['삼청터널',37.5950,126.9855], hsu:['한성대입구',37.5886,127.0063], hh2:['혜화동 로터리',37.5865,127.0015]
+};
+const EDGES = [
+ ['ch-s8','ch','s8','사직로8길'],['ch-sm5','ch','sm5','새문안로5길'],
+ ['s8-ghm','s8','ghm','사직로'],['gbg-s8','gbg','s8','사직로'],['gbg-sjd','gbg','sjd','사직로'],
+ ['sjd-dnm','sjd','dnm','사직로(사직터널)',[[37.5747,126.9655]]],
+ ['gbg-cw','gbg','cw','자하문로',[[37.5800,126.9718]]],['cw-jhm','cw','jhm','자하문로'],['jhm-sgj','jhm','sgj','자하문로',[[37.5970,126.9640]]],
+ ['ghm-dsg','ghm','dsg','율곡로'],['dsg-ag','dsg','ag','율곡로'],['ag-dhm','ag','dhm','율곡로'],
+ ['dhm-wn','dhm','wn','율곡로',[[37.5765,126.9945]]],['wn-ih','wn','ih','율곡로',[[37.5757,127.0005]]],['ih-hij','ih','hij','율곡로',[[37.5745,127.0070]]],
+ ['dsg-sc','dsg','sc','삼청로',[[37.5800,126.9806],[37.5830,126.9812]]],['sc-sct','sc','sct','삼청로',[[37.5905,126.9840]]],
+ ['sct-hsu','sct','hsu','성북로',[[37.5935,126.9930],[37.5905,127.0010]]],['hsu-hh2','hsu','hh2','혜화로'],
+ ['hh2-ih','hh2','ih','대학로',[[37.5822,127.0020]]],['hh2-wn','hh2','wn','창경궁로',[[37.5820,126.9990]]],
+ ['ghm-sjr','ghm','sjr','세종대로'],['sjr-cth','sjr','cth','세종대로'],['cth-srm','cth','srm','세종대로',[[37.5630,126.9770]]],['sst-srm','sst','srm','세종대로'],
+ ['sjr-sm5','sjr','sm5','새문안로'],['sm5-ghg','sm5','ghg','새문안로'],['ghg-sdm','ghg','sdm','새문안로',[[37.5685,126.9682]]],
+ ['sdm-dnm','sdm','dnm','통일로',[[37.5695,126.9630]]],['dnm-hj','dnm','hj','통일로',[[37.5790,126.9520],[37.5850,126.9465]]],
+ ['dnm-ght','dnm','ght','금화터널',[[37.5700,126.9560]]],
+ ['sdm-cjr','sdm','cjr','충정로'],['cjr-ah','cjr','ah','충정로'],
+ ['sdm-cth','sdm','cth','서소문로',[[37.5635,126.9715],[37.5650,126.9755]]],
+ ['sdm-sst','sdm','sst','의주로',[[37.5625,126.9685],[37.5588,126.9700]]],
+ ['sst-hh','sst','hh','퇴계로',[[37.5570,126.9760]]],['hh-md','hh','md','퇴계로'],['md-cm','md','cm','퇴계로'],['cm-ddp','cm','ddp','퇴계로',[[37.5640,127.0030]]],
+ ['md-ns1','md','ns1','삼일대로'],['md-ej2','md','ej2','삼일대로'],['ej2-j2','ej2','j2','삼일대로'],['j2-ag','j2','ag','삼일대로',[[37.5735,126.9868]]],
+ ['hh-bok','hh','bok','소공로'],['srm-bok','srm','bok','남대문로'],['bok-ej1','bok','ej1','남대문로'],['ej1-jg','ej1','jg','남대문로'],
+ ['cth-ej1','cth','ej1','을지로'],['ej1-ej2','ej1','ej2','을지로'],['ej2-ej3','ej2','ej3','을지로'],['ej3-ej4','ej3','ej4','을지로'],['ej4-ddp','ej4','ddp','을지로'],
+ ['ddp-hij','ddp','hij','장충단로'],
+ ['sjr-jg','sjr','jg','종로'],['jg-j2','jg','j2','종로'],['j2-j3','j2','j3','종로'],['j3-j4','j3','j4','종로'],['j4-j5','j4','j5','종로'],['j5-hij','j5','hij','종로'],
+ ['hij-ssd','hij','ssd','왕산로',[[37.5728,127.0170]]],
+ ['j3-dhm','j3','dhm','돈화문로'],['j3-ej3','j3','ej3','수표로'],
+ ['cm-ej4','cm','ej4','창경궁로'],['ej4-j4','ej4','j4','창경궁로'],['j4-wn','j4','wn','창경궁로']
+];
+/* 바깥에서 도심으로 들어오는 입구 */
+const GATES = {
+ hj:'북서쪽 · 통일로(홍제)', sgj:'북쪽 · 자하문로(세검정)', hsu:'북동쪽 · 성북로→삼청터널', hh2:'북동쪽 · 혜화→대학로',
+ ssd:'동쪽 · 신설동', ah:'서쪽 · 아현→충정로', ght:'서쪽 · 신촌→금화터널', sst:'남쪽 · 서울역→의주로',
+ ns1:'남쪽 · 남산1호터널', hh:'남쪽 · 남산3호터널(회현)', ddp:'동남쪽 · 동대문역사문화공원', cm:'남동쪽 · 충무로'
+};
+const LANDMARKS = ['ghm','gbg','sjr','cth','srm','sst','sdm','dnm','ag','jg','j3','hij','ssd','hh2','hj','sgj','sc','ddp','md','cjr','wn'];
+
+/* 출발 지역 */
+const REGIONS = [
+ ['서울 · 도심/서북권',[
+  ['종로구 평창·부암동',37.6030,126.9660],['종로구 혜화·창신동',37.5800,127.0060],['중구 신당·약수동',37.5600,127.0130],['중구 회현·중림동',37.5590,126.9700],
+  ['용산구',37.5320,126.9800],['서대문구 홍제·홍은동',37.5890,126.9420],['서대문구 신촌·연희동',37.5640,126.9330],['은평구',37.6150,126.9250],
+  ['마포구 공덕·아현',37.5470,126.9530],['마포구 합정·망원·상암',37.5560,126.9060]]],
+ ['서울 · 동북권',[
+  ['성북구',37.5920,127.0160],['강북구',37.6380,127.0250],['도봉구',37.6680,127.0470],['노원구',37.6540,127.0700],
+  ['동대문구',37.5810,127.0450],['중랑구',37.6010,127.0920],['성동구',37.5610,127.0390],['광진구',37.5430,127.0850]]],
+ ['서울 · 서남권',[
+  ['강서구',37.5600,126.8300],['양천구',37.5270,126.8570],['영등포구·여의도',37.5230,126.9130],['구로구',37.4950,126.8870],
+  ['금천구',37.4600,126.9000],['동작구',37.5040,126.9400],['관악구',37.4780,126.9520]]],
+ ['서울 · 동남권',[
+  ['서초구',37.4900,127.0150],['강남구',37.5000,127.0500],['송파구',37.5100,127.1050],['강동구',37.5400,127.1350]]],
+ ['경기 · 인천',[
+  ['고양 일산',37.6580,126.7700],['고양 덕양(화정·삼송)',37.6350,126.8320],['파주',37.7600,126.7800],['김포',37.6200,126.7150],
+  ['부천',37.5030,126.7660],['인천',37.4560,126.7050],['광명',37.4780,126.8640],['안양·군포',37.3940,126.9570],['과천',37.4290,126.9880],
+  ['성남 분당',37.3820,127.1190],['용인 수지',37.3220,127.0970],['하남',37.5390,127.2150],['구리',37.5940,127.1300],['남양주',37.6360,127.2160],['의정부',37.7380,127.0340]]]
+];
+
+/* ---------- 좌표 계산 ---------- */
+const LAT0=37.5733, LNG0=126.9746, MX=88220, MY=110950;
+const P=(lat,lng)=>[(lng-LNG0)*MX,(LAT0-lat)*MY];
+const UNP=(x,y)=>[LAT0-y/MY, LNG0+x/MX];
+const N=id=>NODES[id];
+const PN=id=>P(NODES[id][1],NODES[id][2]);
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+const EMAP={}; const ADJ={};
+EDGES.forEach(e=>{
+  const [id,a,b,road,via]=e;
+  const pts=[[N(a)[1],N(a)[2]],...(via||[]),[N(b)[1],N(b)[2]]];
+  const xy=pts.map(p=>P(p[0],p[1]));
+  let len=0; for(let i=1;i<xy.length;i++) len+=dist(xy[i-1],xy[i]);
+  EMAP[id]={id,a,b,road,pts,xy,len};
+  (ADJ[a]=ADJ[a]||[]).push(id); (ADJ[b]=ADJ[b]||[]).push(id);
+});
+const m=s=>{const [h,mm]=s.split(':').map(Number);return h*60+mm;};
+const hm=v=>{v=((v%1440)+1440)%1440;return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.round(v%60)).padStart(2,'0');};
+
+/* ---------- 데이터 ---------- */
+let DATA;
+try{ DATA=JSON.parse(document.getElementById('app-data').textContent); }catch(e){ DATA={version:1,events:[]}; }
+const NONE={id:'none',name:'마라톤 없음 (평소 주일)',date:'',summary:'통제 구간 없이 평소 길로 안내합니다.',segs:[],sources:[]};
+
+/* ---------- 통제 판단 ---------- */
+function overlaps(seg,a,b){ return m(seg.from)<b && m(seg.to)>a; }
+function closuresFor(ev,a,b){
+  const E=new Set(), Nn=new Set();
+  ev.segs.forEach(s=>{ if(!overlaps(s,a,b)) return; (s.edges||[]).forEach(x=>E.add(x)); (s.nodes||[]).forEach(x=>Nn.add(x)); });
+  const cnt={}; E.forEach(id=>{const e=EMAP[id]; if(!e) return; cnt[e.a]=(cnt[e.a]||0)+1; cnt[e.b]=(cnt[e.b]||0)+1;});
+  Object.keys(cnt).forEach(k=>{ if(cnt[k]>=2) Nn.add(k); });
+  Nn.delete('ch');
+  return {E,N:Nn};
+}
+function segPolysXY(s){
+  const out=[];
+  (s.edges||[]).forEach(id=>{ if(EMAP[id]) out.push(EMAP[id].xy); });
+  if(s.poly) out.push(s.poly.map(p=>P(p[0],p[1])));
+  return out;
+}
+function cross(p1,p2,p3,p4){
+  const d=(a,b,c)=>(c[0]-a[0])*(b[1]-a[1])-(c[1]-a[1])*(b[0]-a[0]);
+  const d1=d(p3,p4,p1),d2=d(p3,p4,p2),d3=d(p1,p2,p3),d4=d(p1,p2,p4);
+  return ((d1>0&&d2<0)||(d1<0&&d2>0))&&((d3>0&&d4<0)||(d3<0&&d4>0));
+}
+function countCross(a,b,polys){
+  let c=0;
+  polys.forEach(pl=>{ for(let i=1;i<pl.length;i++){ if(cross(a,b,pl[i-1],pl[i])){c++;return;} } });
+  return c;
+}
+function dijkstra(src,cl){
+  const D={},Prev={},Q=new Set(Object.keys(NODES));
+  Object.keys(NODES).forEach(k=>D[k]=Infinity);
+  if(cl.N.has(src)) return null;
+  D[src]=0;
+  while(Q.size){
+    let u=null,best=Infinity; Q.forEach(k=>{if(D[k]<best){best=D[k];u=k;}});
+    if(u===null) break; Q.delete(u);
+    if(u==='ch') break;
+    (ADJ[u]||[]).forEach(eid=>{
+      if(cl.E.has(eid)) return;
+      const e=EMAP[eid]; const v=e.a===u?e.b:e.a;
+      if(cl.N.has(v)) return;
+      const w=e.len/1000/24*60+0.35;
+      if(D[u]+w<D[v]){D[v]=D[u]+w;Prev[v]=[u,eid];}
+    });
+  }
+  if(!isFinite(D.ch)) return null;
+  const nodes=['ch'],edges=[]; let c='ch';
+  while(c!==src){const [p,eid]=Prev[c]; edges.unshift(eid); nodes.unshift(p); c=p;}
+  return {min:D.ch,nodes,edges};
+}
+function speed(km){ return Math.min(46,16+2.2*km); }
+function insideKm(a,b){ const bb=bboxNodes(), sh=600; let c=0; const n=40;
+  for(let i=0;i<n;i++){ const t=(i+.5)/n, x=a[0]+(b[0]-a[0])*t, y=a[1]+(b[1]-a[1])*t;
+    if(x>bb[0]+sh&&x<bb[2]-sh&&y>bb[1]+sh&&y<bb[3]-sh) c++; }
+  return dist(a,b)/1000*c/n; }
+function dirName(id){ const p=PN(id); const ang=(Math.atan2(-p[1],p[0])*180/Math.PI+360)%360;
+  return ['동','북동','북','북서','서','남서','남','남동'][Math.round(ang/45)%8]+'쪽'; }
+function gateLabel(id){ return dirName(id)+' · '+N(id)[0].replace(/\(.*\)/,''); }
+function inMap(xy){ const b=bboxNodes(); return xy[0]>b[0]&&xy[0]<b[2]&&xy[1]>b[1]&&xy[1]<b[3]; }
+let _bb=null;
+function bboxNodes(){ if(_bb) return _bb; let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; Object.keys(NODES).forEach(k=>{const p=PN(k);x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1]);}); _bb=[x0,y0,x1,y1]; return _bb; }
+
+function plan(ev,start,arr){
+  const s=P(start.lat,start.lng);
+  const cl=closuresFor(ev,arr-30,arr);
+  const polys=[],polysO=[]; ev.segs.forEach(sg=>{ if(overlaps(sg,arr-100,arr-10)) segPolysXY(sg).forEach(p=>(sg.outer?polysO:polys).push(p)); });
+  let cands=Object.keys(GATES);
+  if(inMap(s)){
+    const near=Object.keys(NODES).filter(k=>k!=='ch').sort((a,b)=>dist(s,PN(a))-dist(s,PN(b))).slice(0,4);
+    cands=[...new Set([...near,...cands])];
+  }
+  const res=[];
+  cands.forEach(c=>{
+    if(cl.N.has(c)) return;
+    const km=dist(s,PN(c))/1000, kin=insideKm(s,PN(c));
+    const outer=(km-kin)*1.35/speed(km)*60 + kin*1.35/14*60;
+    const nxi=countCross(s,PN(c),polys), nxo=countCross(s,PN(c),polysO), nx=nxi+nxo;
+    const r=dijkstra(c,cl); if(!r) return;
+    res.push({entry:c,outer,nx,nxo,inner:r.min,total:outer+nxi*25+nxo*8+r.min,nodes:r.nodes,edges:r.edges,km});
+  });
+  // 도심 안 출발이고 교회와 아주 가까우면
+  res.sort((a,b)=>a.total-b.total);
+  const out=[],seen=new Set();
+  for(const r of res){
+    const key=EMAP[r.edges[0]].road+'|'+r.nodes[r.nodes.length-2]+'|'+dirName(r.entry);
+    const k2=r.edges.slice(0,2).join(',')+r.nodes[r.nodes.length-2];
+    if(seen.has(key)||seen.has(k2)) continue; seen.add(key); seen.add(k2); out.push(r);
+    if(out.length>=3) break;
+  }
+  return {list:out,cl,polys};
+}
+
+/* ---------- 상태 ---------- */
+const state={ev:null,start:null,arr:'09:30',plan:null,sel:0,mapView:'route',pickView:'ov',picking:false};
+const allEvents=()=>{ const t=kstNow().date; return [...DATA.events.filter(e=>!e.date||e.date>=t).sort((a,b)=>a.date.localeCompare(b.date)),NONE]; };
+function kstNow(){
+  const f=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+  const g=t=>f.find(x=>x.type===t).value;
+  return {date:`${g('year')}-${g('month')}-${g('day')}`,min:(+g('hour')%24)*60+(+g('minute'))};
+}
+function dday(date){
+  if(!date) return '';
+  const t=kstNow().date; const d=(new Date(date+'T00:00:00')-new Date(t+'T00:00:00'))/864e5;
+  if(d===0) return '오늘'; if(d===1) return '내일'; if(d>1) return 'D-'+d; return '지난 대회';
+}
+const KDAY=['일','월','화','수','목','금','토'];
+function fmtDate(d){ if(!d) return ''; const x=new Date(d+'T00:00:00'); return `${x.getMonth()+1}월 ${x.getDate()}일(${KDAY[x.getDay()]})`; }
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- UI: 대회 ---------- */
+const evSel=document.getElementById('evSel');
+function fillEvents(){
+  const today=kstNow().date;
+  const evs=allEvents();
+  evSel.innerHTML=evs.map(e=>`<option value="${e.id}">${esc(e.name)}${e.date?' · '+fmtDate(e.date):''}</option>`).join('');
+  if(!state.ev || !evs.find(e=>e.id===state.ev.id)){
+    state.ev=evs.find(e=>e.date && e.date>=today) || NONE;
+  } else state.ev=evs.find(e=>e.id===state.ev.id);
+  evSel.value=state.ev.id;
+  renderEvInfo(); renderTimeline();
+}
+evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value); renderEvInfo(); renderTimeline(); if(state.plan) run(); };
+function renderEvInfo(){
+  const e=state.ev, box=document.getElementById('evInfo');
+  if(e.id==='none'){ box.innerHTML='<b>평소 주일</b><div>통제 구간 없이 가장 가까운 길로 안내해요.</div>'; return; }
+  const dd=dday(e.date);
+  const win=e.segs.filter(s=>!s.outer); let a=Infinity,b=-Infinity; win.forEach(s=>{a=Math.min(a,m(s.from));b=Math.max(b,m(s.to));});
+  box.innerHTML=`<b>${esc(e.name)}</b>${dd?`<span class="badge">${dd}</span>`:''}
+    <div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary||'')}</div>
+    ${isFinite(a)?`<div style="margin-top:6px">교회 주변(도심) 통제: <b>${hm(a)} ~ ${hm(b)}</b></div>`:''}
+    ${e.pending?'<div class="pending">※ 구간별 세부 통제 시간이 아직 발표되지 않았어요. 발표되면 업데이트됩니다.</div>':''}`;
+}
+
+/* ---------- UI: 출발지 ---------- */
+const regionSel=document.getElementById('regionSel');
+regionSel.innerHTML='<option value="">출발 지역을 고르세요</option>'+REGIONS.map((g,gi)=>`<optgroup label="${g[0]}">${g[1].map((r,ri)=>`<option value="${gi}-${ri}">${r[0]}</option>`).join('')}</optgroup>`).join('')+'<option value="custom" disabled>지도에서 찍은 위치</option><option value="geo" disabled>현재 내 위치</option>';
+regionSel.onchange=()=>{
+  if(!regionSel.value||regionSel.value==='custom') return;
+  const [gi,ri]=regionSel.value.split('-').map(Number); const r=REGIONS[gi][1][ri];
+  state.start={name:r[0],lat:r[1],lng:r[2]};
+  savePref();
+};
+const pickBtn=document.getElementById('pickBtn'), pickWrap=document.getElementById('pickWrap'), pickMap=document.getElementById('pickMap');
+pickBtn.onclick=()=>{ state.picking=!state.picking; pickWrap.classList.toggle('hidden',!state.picking); pickBtn.textContent=state.picking?'지도 닫기':'지도에서 직접 찍기'; if(state.picking) drawPick(); };
+document.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{ state.pickView=b.dataset.pk; document.querySelectorAll('[data-pk]').forEach(x=>x.classList.toggle('on',x===b)); drawPick(); });
+function drawPick(){
+  const ev=state.ev, arr=m(state.arr);
+  if(state.pickView==='ov') drawOverview(pickMap,{ev,arr,start:state.start});
+  else drawCenter(pickMap,{ev,arr,view:'all',start:state.start});
+}
+pickMap.addEventListener('click',evt=>{
+  const pt=pickMap.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  const loc=pt.matrixTransform(pickMap.getScreenCTM().inverse());
+  const [lat,lng]=UNP(loc.x,loc.y);
+  state.start={name:'지도에서 찍은 위치',lat,lng,custom:true};
+  const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom';
+  drawPick();
+});
+
+/* ---------- UI: 시간 ---------- */
+const arrTime=document.getElementById('arrTime');
+const chips=document.getElementById('timeChips');
+const PRESETS=[['지금 출발','now'],['8:00까지','08:00'],['9:30까지','09:30'],['11:00까지','11:00']];
+chips.innerHTML=PRESETS.map(p=>`<button class="chip" type="button" data-t="${p[1]}">${p[0]}</button>`).join('');
+let nowMode=false;
+function syncChips(){ chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', nowMode?c.dataset.t==='now':c.dataset.t===state.arr)); }
+chips.onclick=e=>{ const b=e.target.closest('.chip'); if(!b) return;
+  if(b.dataset.t==='now'){ nowMode=true; } else { nowMode=false; state.arr=b.dataset.t; arrTime.value=state.arr; }
+  syncChips(); savePref(); };
+arrTime.onchange=()=>{ nowMode=false; state.arr=arrTime.value||'09:30'; syncChips(); savePref(); };
+
+/* ---------- 실행 ---------- */
+document.getElementById('goBtn').onclick=()=>{
+  if(!state.start){ regionSel.focus(); regionSel.style.borderColor='var(--stop)'; setTimeout(()=>regionSel.style.borderColor='',1500); return; }
+  run(true);
+};
+function run(scroll){
+  const ev=state.ev;
+  let arr=m(state.arr);
+  if(nowMode){
+    const now=kstNow().min; arr=now+40;
+    for(let i=0;i<3;i++){ const p=plan(ev,state.start,arr); if(!p.list.length) break; arr=now+Math.round(p.list[0].total); }
+  }
+  state.arrMin=arr;
+  state.plan=plan(ev,state.start,arr);
+  state.base=plan(NONE,state.start,arr);
+  state.sel=0;
+  renderResult();
+  renderTimeline();
+  if(scroll) document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function roadSteps(r){
+  const steps=[]; let cur=null;
+  r.edges.forEach((eid,i)=>{
+    const e=EMAP[eid]; const to=N(r.nodes[i+1])[0];
+    if(cur&&cur.road===e.road){ cur.to=to; } else { cur={road:e.road,to}; steps.push(cur); }
+  });
+  return steps;
+}
+function finalApproach(r){
+  const pen=r.nodes[r.nodes.length-2];
+  return pen==='s8'?'사직로에서 사직로8길로 (교회 북쪽)':'새문안로에서 새문안로5길로 (교회 남쪽)';
+}
+function viaPoints(r){
+  const nodes=r.nodes, edges=r.edges, vias=[];
+  vias.push(r.entry);
+  const changes=[]; for(let i=1;i<edges.length;i++){ if(EMAP[edges[i]].road!==EMAP[edges[i-1]].road) changes.push(nodes[i]); }
+  const pen=nodes[nodes.length-2];
+  const mids=changes.filter(x=>x!==r.entry&&x!==pen);
+  if(mids.length) vias.push(mids[Math.floor(mids.length/2)]);
+  if(pen!==r.entry) vias.push(pen);
+  return [...new Set(vias)];
+}
+function kakaoUrl(r){
+  const s=state.start; const enc=t=>encodeURIComponent(t.replace(/[,/]/g,' '));
+  const parts=[`${enc(s.geo?'내 위치':'출발 '+s.name)},${s.lat.toFixed(5)},${s.lng.toFixed(5)}`];
+  viaPoints(r).forEach(id=>parts.push(`${enc(N(id)[0])},${N(id)[1]},${N(id)[2]}`));
+  parts.push(`${enc('종교교회')},${N('ch')[1]},${N('ch')[2]}`);
+  return 'https://map.kakao.com/link/by/car/'+parts.join('/');
+}
+function relevantClosures(ev,arr){
+  return ev.segs.filter(s=>!s.outer && overlaps(s,arr-30,arr));
+}
+function renderResult(){
+  const card=document.getElementById('resultCard'), body=document.getElementById('resultBody');
+  card.classList.remove('hidden');
+  const p=state.plan, ev=state.ev, arr=state.arrMin;
+  if(!p.list.length){
+    body.innerHTML=`<div class="result-head">차로 들어오기 어려운 시간이에요</div><div class="avoid">이 시간에는 교회 주변 도로가 모두 막혀요. 지하철(광화문역·경복궁역)을 이용하시거나, 통제 해제 시각 이후로 맞춰 오세요.</div>`;
+    document.getElementById('kakaoBtn').classList.add('hidden'); document.getElementById('alts').innerHTML=''; drawMain(); return;
+  }
+  document.getElementById('kakaoBtn').classList.remove('hidden');
+  const r=p.list[state.sel];
+  const steps=roadSteps(r);
+  const gate=gateLabel(r.entry);
+  const base=state.base.list[0];
+  const extra=base?Math.round(r.total-base.total):0;
+  const rel=relevantClosures(ev,arr);
+  const dep=arr-Math.round(r.total);
+  const notToday=nowMode&&ev.id!=='none'&&ev.date!==kstNow().date;
+  const startLine=nowMode?`지금 출발하면 <b>${hm(arr)}</b>쯤 도착`:`<b>${hm(dep)}</b>쯤 출발하면 ${hm(arr)} 도착`;
+  body.innerHTML=`
+    <div class="eyebrow" style="background:var(--route-soft);color:#1f5852">${esc(state.start.name)} 출발 · ${nowMode?'지금':hm(arr)+' 도착'}</div>
+    <div class="result-head" style="margin-top:10px"><em>${esc(gate)}</em> 쪽으로 들어와서<br>${esc(finalApproach(r))} 오세요</div>
+    <div class="meta">
+      <span class="pill">약 ${Math.round(r.total)}분</span>
+      ${rel.length&&extra>0?`<span class="pill warn">평소보다 +${extra}분</span>`:''}
+      ${r.nx?`<span class="pill warn">바깥 코스 통과 주의</span>`:''}
+      <span class="pill mut">${startLine.replace(/<\/?b>/g,'')}</span>
+      ${notToday?`<span class="pill mut">대회 날(${fmtDate(ev.date)}) 같은 시각 기준</span>`:''}
+    </div>
+    <ol class="path">
+      <li>${esc(state.start.name)}<small>${esc(gate)} 방향으로 이동</small></li>
+      ${steps.map((st,i)=>`<li><b>${esc(st.road)}</b><small>${i===steps.length-1?'도착':esc(st.to)+'까지'}</small></li>`).join('')}
+    </ol>
+    ${rel.length?`<div class="avoid"><b>이 시간 피해야 할 길</b><br>${rel.map(s=>`${esc(s.name)} <span style="white-space:nowrap">(${s.from}~${s.to}${s.est?', 추정':''})</span>`).join('<br>')}</div>`:(ev.id!=='none'?`<div class="avoid" style="background:var(--route-soft);color:#1f5852">이 시간에는 교회 주변 통제가 없어요. 평소 길로 오셔도 됩니다.</div>`:'')}
+    ${r.nx?`<div class="note">바깥 마라톤 코스(${'잠실·광진·여의도 등'})를 가로지르는 구간이 있어 실제로는 더 걸릴 수 있어요. 카카오맵 안내를 따라 주세요.</div>`:''}`;
+  document.getElementById('kakaoBtn').href=kakaoUrl(r);
+  document.getElementById('kakaoNote').innerHTML=`카카오맵이 열리면 경유지(${viaPoints(r).map(id=>esc(N(id)[0])).join(' → ')})가 들어가 있어요.`+(state.start.geo?'':` 출발지는 '내 위치'로 바꾸면 더 정확합니다.`);
+  const alts=document.getElementById('alts');
+  alts.innerHTML=p.list.length>1?`<div class="note" style="margin-top:16px;font-weight:700;color:var(--ink)">다른 길</div>`+p.list.map((x,i)=>`<div class="alt-item ${i===state.sel?'on':''}" data-i="${i}"><div class="t">${esc(gateLabel(x.entry))} · 약 ${Math.round(x.total)}분</div><div class="d">${roadSteps(x).map(s=>esc(s.road)).join(' → ')}</div></div>`).join(''):'';
+  alts.querySelectorAll('.alt-item').forEach(el=>el.onclick=()=>{ state.sel=+el.dataset.i; renderResult(); });
+  drawMain();
+}
+document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ state.mapView=b.dataset.mv; document.querySelectorAll('[data-mv]').forEach(x=>x.classList.toggle('on',x===b)); drawMain(); });
+function drawMain(){
+  const svg=document.getElementById('map');
+  const r=state.plan&&state.plan.list[state.sel];
+  if(state.mapView==='ov') drawOverview(svg,{ev:state.ev,arr:state.arrMin,start:state.start,route:r});
+  else drawCenter(svg,{ev:state.ev,arr:state.arrMin,view:state.mapView,route:r,start:state.start});
+}
+
+/* ---------- 지도: 도심 ---------- */
+const NS='http://www.w3.org/2000/svg';
+const pts2=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+const PARKS=[
+ [[37.5832,126.9741],[37.5832,126.9793],[37.5772,126.9793],[37.5772,126.9741]], // 경복궁
+ [[37.5835,126.9880],[37.5835,126.9965],[37.5785,126.9965],[37.5778,126.9890]], // 창덕궁·창경궁
+ [[37.5600,126.9790],[37.5540,126.9840],[37.5480,126.9900],[37.5480,126.9990],[37.5530,127.0010],[37.5570,126.9950],[37.5585,126.9860]], // 남산
+ [[37.5920,126.9560],[37.5900,126.9620],[37.5830,126.9640],[37.5790,126.9610],[37.5820,126.9555]], // 인왕산
+ [[37.6020,126.9700],[37.5995,126.9800],[37.5930,126.9810],[37.5900,126.9740],[37.5940,126.9690]], // 북악산
+ [[37.5677,126.9688],[37.5677,126.9720],[37.5700,126.9720],[37.5700,126.9688]] // 경희궁
+];
+const STREAM=[[37.5693,126.9790],[37.5690,126.9880],[37.5692,126.9960],[37.5700,127.0060],[37.5712,127.0150],[37.5728,127.0300]];
+function el(tag,attrs,parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+function text(parent,x,y,str,fs,o={}){
+  const t=el('text',{x,y,'font-size':fs,'text-anchor':o.anchor||'middle','font-weight':o.w||500,fill:o.fill||'#5c4a39',stroke:'#F3ECDF','stroke-width':fs*0.32,'paint-order':'stroke','stroke-linejoin':'round','font-family':'Noto Sans KR, sans-serif'},parent);
+  t.textContent=str; return t;
+}
+function drawCenter(svg,o){
+  svg.innerHTML='';
+  const ev=o.ev||NONE, arr=o.arr??m(state.arr);
+  const r=o.route;
+  // viewBox
+  let x0,y0,x1,y1;
+  const fit=(list)=>{ x0=1e9;y0=1e9;x1=-1e9;y1=-1e9; list.forEach(p=>{x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1]);}); };
+  if(o.view==='route'&&r){
+    const ps=[]; r.edges.forEach(id=>EMAP[id].xy.forEach(p=>ps.push(p))); ps.push(PN('ch'),PN('ghm'),PN('sjr'));
+    fit(ps);
+  } else { const b=bboxNodes(); x0=b[0];y0=b[1];x1=b[2];y1=b[3]; }
+  let w=x1-x0,h=y1-y0; const pad=Math.max(w,h)*0.08+250; x0-=pad;y0-=pad;w+=pad*2;h+=pad*2;
+  const ratio=0.78; if(h<w*ratio){ const d=w*ratio-h; y0-=d/2; h=w*ratio; } else { const d=h/ratio-w; x0-=d/2; w=h/ratio; }
+  if(w<1800){ const d=1800-w; x0-=d/2; w=1800; const hh=w*ratio; y0-=(hh-h)/2; h=hh; }
+  svg.setAttribute('viewBox',`${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
+  const U=w/360; // 1 화면px 근사
+  el('rect',{x:x0,y:y0,width:w,height:h,fill:'#F3ECDF'},svg);
+  PARKS.forEach(pk=>el('polygon',{points:pts2(pk.map(p=>P(p[0],p[1]))),fill:'#DCE6CF',opacity:.85},svg));
+  el('polyline',{points:pts2(STREAM.map(p=>P(p[0],p[1]))),fill:'none',stroke:'#B7D3DF','stroke-width':U*2.2,'stroke-linecap':'round'},svg);
+  // 기본 도로
+  const gBase=el('g',{},svg);
+  Object.values(EMAP).forEach(e=>{
+    const minor=e.road.includes('길');
+    el('polyline',{points:pts2(e.xy),fill:'none',stroke:'#fff','stroke-width':U*(minor?3.4:5.4),'stroke-linecap':'round','stroke-linejoin':'round'},gBase);
+  });
+  Object.values(EMAP).forEach(e=>{
+    const minor=e.road.includes('길');
+    el('polyline',{points:pts2(e.xy),fill:'none',stroke:'#DCCDB6','stroke-width':U*(minor?1.8:3.2),'stroke-linecap':'round','stroke-linejoin':'round'},gBase);
+  });
+  // 통제
+  const gC=el('g',{},svg);
+  ev.segs.forEach(s=>{
+    const on=overlaps(s,arr-30,arr);
+    segPolysXY(s).forEach(pl=>{
+      el('polyline',{points:pts2(pl),fill:'none',stroke:on?'#D2544A':'#E8B4AC','stroke-width':U*(on?4.2:2.6),'stroke-linecap':'round','stroke-linejoin':'round','stroke-dasharray':on?'':`${U*5} ${U*4}`,opacity:on?1:.9},gC);
+    });
+    (s.nodes||[]).forEach(id=>{ const p=PN(id); const k=U*5;
+      el('circle',{cx:p[0],cy:p[1],r:k,fill:on?'#D2544A':'#E8B4AC',stroke:'#fff','stroke-width':U*1.2},gC);
+      el('path',{d:`M${p[0]-k*.45},${p[1]-k*.45}L${p[0]+k*.45},${p[1]+k*.45}M${p[0]+k*.45},${p[1]-k*.45}L${p[0]-k*.45},${p[1]+k*.45}`,stroke:'#fff','stroke-width':U*1.4,'stroke-linecap':'round'},gC);
+    });
+  });
+  // 추천 경로
+  if(r){
+    const all=[]; r.edges.forEach((id,i)=>{ const e=EMAP[id]; let xy=e.xy.slice(); if(e.a!==r.nodes[i]) xy.reverse(); xy.forEach(p=>all.push(p)); });
+    el('polyline',{points:pts2(all),fill:'none',stroke:'#fff','stroke-width':U*8,'stroke-linecap':'round','stroke-linejoin':'round',opacity:.9},svg);
+    el('polyline',{points:pts2(all),fill:'none',stroke:'#2E7D74','stroke-width':U*5.2,'stroke-linecap':'round','stroke-linejoin':'round'},svg);
+    // 방향 화살표
+    let acc=0; const step=U*70;
+    for(let i=1;i<all.length;i++){
+      const a=all[i-1],b=all[i],L=dist(a,b); let t=step-acc;
+      while(t<L){ const x=a[0]+(b[0]-a[0])*t/L,y=a[1]+(b[1]-a[1])*t/L; const ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI;
+        el('path',{d:`M${-U*1.6},${-U*1.8}L${U*1.2},0L${-U*1.6},${U*1.8}`,fill:'none',stroke:'#fff','stroke-width':U*1.1,'stroke-linecap':'round','stroke-linejoin':'round',transform:`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(0)})`},svg);
+        t+=step; }
+      acc=(acc+L)%step;
+    }
+    const s0=PN(r.entry);
+    el('circle',{cx:s0[0],cy:s0[1],r:U*4.5,fill:'#fff',stroke:'#2E7D74','stroke-width':U*2},svg);
+  }
+  // 라벨
+  const fs=U*11.5;
+  const roadDone=new Set();
+  Object.values(EMAP).sort((a,b)=>b.len-a.len).forEach(e=>{
+    if(roadDone.has(e.road)||e.road.includes('길')||e.len<U*60) return;
+    const mid=e.xy[Math.floor(e.xy.length/2)], a=e.xy[0], b=e.xy[e.xy.length-1];
+    const cx=e.xy.length>2?mid[0]:(a[0]+b[0])/2, cy=e.xy.length>2?mid[1]:(a[1]+b[1])/2;
+    if(cx<x0||cx>x0+w||cy<y0||cy>y0+h) return;
+    roadDone.add(e.road);
+    let ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI; if(ang>90) ang-=180; if(ang<-90) ang+=180;
+    const t=text(svg,cx,cy+fs*0.35,e.road.replace(/\(.*\)/,''),fs*0.9,{fill:'#9a8670',w:700}); t.setAttribute('transform',`rotate(${ang.toFixed(0)} ${cx.toFixed(0)} ${cy.toFixed(0)})`);
+  });
+  LANDMARKS.forEach(id=>{ const p=PN(id); if(p[0]<x0||p[0]>x0+w||p[1]<y0||p[1]>y0+h) return;
+    el('circle',{cx:p[0],cy:p[1],r:U*1.6,fill:'#8B7B69'},svg);
+    text(svg,p[0],p[1]-U*4.5,N(id)[0].replace(/\(.*\)/,''),fs,{fill:'#4a3b2e',w:700}); });
+  // 시작 위치(도심 안)
+  if(o.start){ const sp=P(o.start.lat,o.start.lng); if(sp[0]>x0&&sp[0]<x0+w&&sp[1]>y0&&sp[1]<y0+h){
+    el('circle',{cx:sp[0],cy:sp[1],r:U*5,fill:'#E8956B',stroke:'#fff','stroke-width':U*1.6},svg);
+    text(svg,sp[0],sp[1]+U*14,'출발',fs,{fill:'#b4572a',w:800}); } }
+  // 교회
+  const c=PN('ch'); const k=U*7.5;
+  el('circle',{cx:c[0],cy:c[1],r:k,fill:'#7A4E2D',stroke:'#fff','stroke-width':U*1.8},svg);
+  el('path',{d:`M${c[0]},${c[1]-k*.55}V${c[1]+k*.55}M${c[0]-k*.38},${c[1]-k*.18}H${c[0]+k*.38}`,stroke:'#fff','stroke-width':U*1.5,'stroke-linecap':'round'},svg);
+  text(svg,c[0]-k*1.3,c[1]+fs*0.35,'종교교회',fs*1.15,{anchor:'end',fill:'#7A4E2D',w:800});
+}
+
+/* ---------- 지도: 서울 전체 ---------- */
+const HAN=[[37.6050,126.7900],[37.5850,126.8200],[37.5680,126.8500],[37.5550,126.8800],[37.5420,126.9000],[37.5330,126.9180],[37.5300,126.9400],[37.5230,126.9600],[37.5160,126.9800],[37.5130,126.9960],[37.5180,127.0120],[37.5280,127.0300],[37.5270,127.0500],[37.5220,127.0700],[37.5260,127.0850],[37.5350,127.1000],[37.5450,127.1150],[37.5550,127.1300],[37.5700,127.1550],[37.5850,127.1900]];
+const OVB={lat0:37.43,lat1:37.71,lng0:126.76,lng1:127.19};
+function drawOverview(svg,o){
+  svg.innerHTML='';
+  const ev=o.ev||NONE, arr=o.arr??m(state.arr), r=o.route;
+  const a=P(OVB.lat1,OVB.lng0), b=P(OVB.lat0,OVB.lng1);
+  const x0=a[0],y0=a[1],w=b[0]-a[0],h=b[1]-a[1];
+  svg.setAttribute('viewBox',`${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
+  const U=w/360, fs=U*11;
+  el('rect',{x:x0,y:y0,width:w,height:h,fill:'#F3ECDF'},svg);
+  el('polyline',{points:pts2(HAN.map(p=>P(p[0],p[1]))),fill:'none',stroke:'#C6DCE6','stroke-width':U*9,'stroke-linecap':'round','stroke-linejoin':'round'},svg);
+  text(svg,P(37.5180,126.9700)[0],P(37.5180,126.9700)[1]+U*14,'한강',fs,{fill:'#6f98ab',w:700});
+  // 지역 이름
+  const seenL=new Set();
+  REGIONS.forEach(g=>g[1].forEach(rg=>{ const p=P(rg[1],rg[2]); if(p[0]<x0||p[0]>x0+w||p[1]<y0||p[1]>y0+h) return;
+    const lab=rg[0].replace('고양 ','').replace(/ .*/,'').replace(/\(.*\)/,''); if(seenL.has(lab)||dist(p,PN('ch'))<4500) return; seenL.add(lab);
+    el('circle',{cx:p[0],cy:p[1],r:U*1.3,fill:'#bfae98'},svg);
+    text(svg,p[0],p[1]-U*3.5,lab,fs*0.78,{fill:'#a08d77',w:500}); }));
+  // 도심 상자
+  const bb=bboxNodes();
+  el('rect',{x:bb[0],y:bb[1],width:bb[2]-bb[0],height:bb[3]-bb[1],fill:'none',stroke:'#8B7B69','stroke-width':U*1,'stroke-dasharray':`${U*3} ${U*2}`,rx:U*3},svg);
+  // 통제
+  ev.segs.forEach(s=>{ const on=overlaps(s,arr-90,arr);
+    segPolysXY(s).forEach(pl=>el('polyline',{points:pts2(pl),fill:'none',stroke:on?'#D2544A':'#E8B4AC','stroke-width':U*(on?3.4:2.4),'stroke-linecap':'round','stroke-linejoin':'round'},svg)); });
+  // 경로
+  if(r&&o.start){
+    const sp=P(o.start.lat,o.start.lng), ep=PN(r.entry);
+    el('line',{x1:sp[0],y1:sp[1],x2:ep[0],y2:ep[1],stroke:'#2E7D74','stroke-width':U*2.6,'stroke-dasharray':`${U*4} ${U*3}`,'stroke-linecap':'round'},svg);
+    const all=[]; r.edges.forEach((id,i)=>{ const e=EMAP[id]; let xy=e.xy.slice(); if(e.a!==r.nodes[i]) xy.reverse(); xy.forEach(p=>all.push(p)); });
+    el('polyline',{points:pts2(all),fill:'none',stroke:'#2E7D74','stroke-width':U*3.2,'stroke-linecap':'round','stroke-linejoin':'round'},svg);
+  }
+  if(o.start){ let sp=P(o.start.lat,o.start.lng); sp=[Math.min(Math.max(sp[0],x0+U*8),x0+w-U*8),Math.min(Math.max(sp[1],y0+U*8),y0+h-U*8)];
+    el('circle',{cx:sp[0],cy:sp[1],r:U*5,fill:'#E8956B',stroke:'#fff','stroke-width':U*1.6},svg);
+    text(svg,sp[0],sp[1]+U*15,'출발',fs,{fill:'#b4572a',w:800}); }
+  const c=PN('ch');
+  el('circle',{cx:c[0],cy:c[1],r:U*5,fill:'#7A4E2D',stroke:'#fff','stroke-width':U*1.5},svg);
+  text(svg,c[0],c[1]-U*8,'종교교회',fs*1.1,{fill:'#7A4E2D',w:800});
+}
+
+/* ---------- 통제 타임라인 ---------- */
+function renderTimeline(){
+  const ev=state.ev, box=document.getElementById('timeline');
+  document.getElementById('tlCard').classList.toggle('hidden',ev.id==='none');
+  if(ev.id==='none'){ box.innerHTML=''; return; }
+  let a=Infinity,b=-Infinity; ev.segs.forEach(s=>{a=Math.min(a,m(s.from));b=Math.max(b,m(s.to));});
+  a=Math.floor(a/60)*60; b=Math.ceil(b/60)*60; const span=b-a||60;
+  const mark=state.plan?state.arrMin:m(state.arr);
+  const segs=ev.segs.slice().sort((x,y)=>(x.outer?1:0)-(y.outer?1:0)||m(x.from)-m(y.from));
+  box.innerHTML=segs.map(s=>{ const on=overlaps(s,mark-30,mark);
+    return `<div class="tl-row ${on&&!s.outer?'active':''}"><div class="tl-name">${esc(s.name)}${s.outer?'<small>교회와 먼 구간</small>':''}${s.est?'<small>추정</small>':''}</div>
+    <div class="tl-bar"><span class="${s.est?'est':''}" style="left:${(m(s.from)-a)/span*100}%;width:${(m(s.to)-m(s.from))/span*100}%"></span>${mark>=a&&mark<=b?`<i class="now" style="left:${(mark-a)/span*100}%"></i>`:''}</div>
+    <div class="tl-time">${s.from} ~ ${s.to}${s.note?' · '+esc(s.note):''}</div></div>`; }).join('')+
+    `<div class="tl-axis"><span>${hm(a)}</span><span>${hm(a+span/2)}</span><span>${hm(b)}</span></div>`;
+  document.getElementById('srcNote').innerHTML='검은 세로선 = 도착 시각. 출처: '+(ev.sources||[]).map(s=>`<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.t)}</a>`).join(', ');
+}
+
+/* ---------- 기억(이 기기) ---------- */
+function savePref(){ try{ localStorage.setItem('jg-route',JSON.stringify({start:state.start&&state.start.geo?null:state.start,arr:state.arr})); }catch(e){} }
+function loadPref(){ try{ const p=JSON.parse(localStorage.getItem('jg-route')||'null'); if(!p) return;
+  if(p.arr){state.arr=p.arr;arrTime.value=p.arr;}
+  if(p.start){ state.start=p.start;
+    let found=false; REGIONS.forEach((g,gi)=>g[1].forEach((r,ri)=>{ if(r[0]===p.start.name){regionSel.value=gi+'-'+ri;found=true;} }));
+    if(!found){ const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom'; } }
+}catch(e){} }
+
+/* ---------- 현재 위치 ---------- */
+const geoBtn=document.getElementById('geoBtn'), geoMsg=document.getElementById('geoMsg');
+function gmsg(t,bad){ geoMsg.classList.remove('hidden'); geoMsg.textContent=t; geoMsg.style.color=bad?'#9b2f27':'#1f5852'; }
+geoBtn.onclick=()=>{
+  if(!navigator.geolocation){ gmsg('이 브라우저에서는 위치를 쓸 수 없어요. 아래에서 지역을 골라 주세요.',true); return; }
+  geoBtn.disabled=true; geoBtn.textContent='📍 위치 확인 중…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    geoBtn.disabled=false; geoBtn.textContent='📍 지금 내 위치에서 출발';
+    const {latitude:lat,longitude:lng}=pos.coords;
+    state.start={name:'내 위치',lat,lng,geo:true};
+    const o=regionSel.querySelector('option[value=geo]'); o.disabled=false; regionSel.value='geo';
+    const km=Math.hypot((lng-LNG0)*MX,(LAT0-lat)*MY)/1000;
+    gmsg(km>60?'교회에서 꽤 먼 곳이에요. 길안내는 카카오맵에서 확인해 주세요.':`내 위치를 찾았어요 (교회까지 직선 ${km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km'}).`, km>60);
+    if(!state.picking){} 
+    run(true);
+  },err=>{
+    geoBtn.disabled=false; geoBtn.textContent='📍 지금 내 위치에서 출발';
+    gmsg(err.code===1?'위치 권한이 꺼져 있어요. 휴대폰 설정에서 위치 권한을 허용하거나, 아래에서 지역을 골라 주세요.':'위치를 찾지 못했어요. 아래에서 지역을 골라 주세요.',true);
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+};
+/* 대회 당일이면 '지금 출발' 자동 선택 */
+function autoNow(){
+  const t=kstNow(); if(state.ev&&state.ev.date===t.date&&t.min>=240&&t.min<=840) nowMode=true;
+}
+/* ---------- 공유 ---------- */
+document.getElementById('shareBtn').onclick=async()=>{
+  const url=location.href.split('#')[0], sm=document.getElementById('shareMsg');
+  const data={title:'마라톤 날, 종교교회 오는 길',text:'마라톤 통제를 피해 교회로 오는 가장 빠른 길을 알려 드려요.',url};
+  try{ if(navigator.share){ await navigator.share(data); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  try{ await navigator.clipboard.writeText(url); sm.textContent='링크를 복사했어요. 카카오톡에 붙여 넣어 주세요.'; sm.style.color='#1f5852'; }
+  catch(e){ sm.textContent=url; sm.style.color='#1f5852'; }
+};
+
+/* ---------- 시작 ---------- */
+fillEvents(); loadPref(); autoNow(); syncChips();
+if(!state.start){ /* 기본값 없음 */ }
+window.__app={plan,NODES,EDGES,REGIONS,DATA,state,run,kakaoUrl,viaPoints,closuresFor,m};
+})();
+</script>
+</body>
+</html>
