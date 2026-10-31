@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>배경 지도 고르기 · 샘플</title>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<script src="vendor/leaflet/leaflet.js"></script>
+<link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
+<script src="vendor/maplibre/maplibre-gl.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5EFE5;color:#3A2E24;font-family:"Noto Sans KR",sans-serif}
+.wrap{max-width:600px;margin:0 auto;padding:22px 16px 60px}
+h1{font-size:22px;margin:0 0 6px}
+.sub{color:#8B7B69;font-size:14px}
+.card{background:#FFFCF7;border-radius:20px;padding:16px;margin-top:16px;box-shadow:0 6px 22px -14px rgba(122,78,45,.35)}
+.card h2{font-size:17px;margin:0 0 2px}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:2px}
+.free{background:#DCEFEA;color:#1f5852}.key{background:#FBE7DA;color:#9b4a22}
+.desc{font-size:13.5px;color:#8B7B69;margin:4px 0 10px}
+.m{height:280px;border-radius:14px;overflow:hidden;border:1px solid #E7DCCB}
+.pin{width:26px;height:26px;border-radius:50%;background:#7A4E2D;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>배경 지도 샘플</h1>
+  <div class="sub">광화문·종교교회 주변을 같은 위치로 띄웠어요. 빨간 선은 통제 구간 예시입니다. 마음에 드는 번호를 알려 주세요.</div>
+  <div id="list"></div>
+</div>
+<script>
+const CH=[37.5733,126.9746], CENTER=[37.5712,126.9810], Z=14.5;
+const RED=[[[37.5758,126.9768],[37.5711,126.9768],[37.5663,126.9779],[37.5600,126.9753]],[[37.5711,126.9768],[37.5702,126.9828],[37.5705,126.9920],[37.5709,127.0018]]];
+const S=[
+ {n:'1. OpenStreetMap 기본 (지금 쓰는 지도)',t:'free',d:'정보가 가장 많지만 색과 글자가 많아 복잡해 보여요.',type:'r',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',att:'© OpenStreetMap'},
+ {n:'2. OpenStreetMap 인도주의(HOT)',t:'free',d:'색이 차분하고 큰길이 잘 보여요. 한글 지명이 나와요.',type:'r',url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',att:'© OpenStreetMap, HOT'},
+ {n:'3. OpenFreeMap 포지트론 (연한 회색)',t:'free',d:'아주 단순하고 깔끔해요. 빨간 선이 가장 잘 보이는 스타일이에요.',type:'v',style:'https://tiles.openfreemap.org/styles/positron'},
+ {n:'4. OpenFreeMap 리버티',t:'free',d:'색은 있지만 정돈된 느낌. 일반 내비 지도와 비슷해요.',type:'v',style:'https://tiles.openfreemap.org/styles/liberty'},
+ {n:'5. OpenFreeMap 브라이트',t:'free',d:'밝고 선명한 색. 도로 위계가 또렷해요.',type:'v',style:'https://tiles.openfreemap.org/styles/bright'},
+ {n:'6. Esri 연회색 지도',t:'free',d:'회색 바탕에 큰길 위주. 지명이 영어로 나올 수 있어요.',type:'r',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',over:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',att:'© Esri'},
+ {n:'7. Esri 거리 지도',t:'free',d:'일반 도로 지도 느낌. 지명이 영어로 나올 수 있어요.',type:'r',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',att:'© Esri'}
+];
+const list=document.getElementById('list');
+S.forEach((s,i)=>{
+  const c=document.createElement('div'); c.className='card';
+  c.innerHTML=`<h2>${s.n}<span class="tag ${s.t}">${s.t==='free'?'무료 · 키 없음':'무료 · 가입 필요'}</span></h2><div class="desc">${s.d}</div><div class="m" id="m${i}"></div>`;
+  list.appendChild(c);
+  if(s.type==='r'){
+    const map=L.map('m'+i,{scrollWheelZoom:false,zoomSnap:0.5}).setView(CENTER,Z); map.attributionControl.setPrefix(false);
+    L.tileLayer(s.url,{maxZoom:19,subdomains:'abc',attribution:s.att}).addTo(map);
+    if(s.over) L.tileLayer(s.over,{maxZoom:19}).addTo(map);
+    RED.forEach(l=>L.polyline(l,{color:'#E0675B',weight:7}).addTo(map));
+    L.marker(CH,{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(map);
+  } else {
+    const map=new maplibregl.Map({container:'m'+i,style:s.style,center:[CENTER[1],CENTER[0]],zoom:Z-1,attributionControl:{compact:true},cooperativeGestures:true});
+    map.on('load',()=>{
+      // 한글 지명 우선
+      map.getStyle().layers.forEach(l=>{ if(l.layout&&l.layout['text-field']) try{ map.setLayoutProperty(l.id,'text-field',['coalesce',['get','name:ko'],['get','name']]); }catch(e){} });
+      map.addSource('red',{type:'geojson',data:{type:'FeatureCollection',features:RED.map(l=>({type:'Feature',geometry:{type:'LineString',coordinates:l.map(p=>[p[1],p[0]])}}))}});
+      map.addLayer({id:'red',type:'line',source:'red',paint:{'line-color':'#E0675B','line-width':6},layout:{'line-cap':'round','line-join':'round'}});
+      const el=document.createElement('div'); el.className='pin'; new maplibregl.Marker({element:el}).setLngLat([CH[1],CH[0]]).addTo(map);
+    });
+  }
+});
+</script>
+</body>
+</html>
