@@ -101,6 +101,10 @@ footer a{color:var(--brown)}
 .live-opt b{display:block;font-size:13.5px;color:var(--muted);font-weight:700}
 .live-opt span{display:block;font-size:22px;font-weight:800;margin-top:2px;letter-spacing:-0.02em}
 .live-opt small{display:block;font-size:12.5px;color:var(--muted)}
+.timeauto{margin-top:18px;font-size:15px;background:var(--sand);border-radius:14px;padding:11px 14px;color:var(--brown)}
+.timeauto b{color:var(--ink)}
+.deptime{margin-top:8px;font-size:14px;color:var(--muted)}
+.deptime summary{cursor:pointer;padding:4px 2px}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -117,7 +121,7 @@ footer a{color:var(--brown)}
   <header>
     <span class="eyebrow">종교교회 · 주일 교통 안내</span>
     <h1><span style="font-size:17px;font-weight:700;color:var(--brown);display:block;margin-bottom:4px">마라톤으로 고생하는 교인들을 위해 만든</span>교회로 가는 가장 빠른 길</h1>
-    <div class="sub">출발 지역과 도착 시각만 고르면, 통제 구간을 피해 들어오는 길을 알려 드려요.</div>
+    <div class="sub">출발 위치만 고르면, 지금 시각에 맞춰 통제 구간을 피해 들어오는 길을 알려 드려요.</div>
   </header>
 
   <section class="card">
@@ -141,11 +145,11 @@ footer a{color:var(--brown)}
       <div class="mapbox"><svg id="pickMap"></svg></div>
     </div>
 
-    <h2 style="margin-top:22px"><span class="step">3</span>몇 시까지 도착하실 건가요?</h2>
-    <div class="chips" id="timeChips"></div>
-    <div class="row" style="margin-top:10px">
-      <input type="time" id="arrTime" value="09:30" step="300">
-    </div>
+    <div class="timeauto" id="timeAuto"></div>
+    <details class="deptime" id="depBox">
+      <summary>다른 시각에 출발하기</summary>
+      <div class="row" style="margin-top:10px"><input type="time" id="depTime" step="300"><button class="xbtn" type="button" id="depNow" style="background:var(--sand);color:var(--brown)">지금으로</button></div>
+    </details>
 
     <button class="btn" id="goBtn" type="button">길 찾기</button>
   </section>
@@ -421,7 +425,7 @@ function fillEvents(){
   evSel.value=state.ev.id;
   renderEvInfo(); renderTimeline();
 }
-evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value); renderEvInfo(); renderTimeline(); if(state.plan) run(); };
+evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value); renderEvInfo(); renderTimeline(); renderTimeAuto(); if(state.plan) run(); };
 function renderEvInfo(){
   const e=state.ev, box=document.getElementById('evInfo');
   if(e.id==='none'){ box.innerHTML='<b>평소 주일</b><div>통제 구간 없이 가장 가까운 길로 안내해요.</div>'; return; }
@@ -440,13 +444,13 @@ regionSel.onchange=()=>{
   if(!regionSel.value||regionSel.value==='custom') return;
   const [gi,ri]=regionSel.value.split('-').map(Number); const r=REGIONS[gi][1][ri];
   state.start={name:r[0],lat:r[1],lng:r[2]};
-  savePref();
+  savePref(); run(true);
 };
 const pickBtn=document.getElementById('pickBtn'), pickWrap=document.getElementById('pickWrap'), pickMap=document.getElementById('pickMap');
 pickBtn.onclick=()=>{ state.picking=!state.picking; pickWrap.classList.toggle('hidden',!state.picking); pickBtn.textContent=state.picking?'지도 닫기':'지도에서 직접 찍기'; if(state.picking) drawPick(); };
 document.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{ state.pickView=b.dataset.pk; document.querySelectorAll('[data-pk]').forEach(x=>x.classList.toggle('on',x===b)); drawPick(); });
 function drawPick(){
-  const ev=state.ev, arr=m(state.arr);
+  const ev=state.ev, arr=depBase()+30;
   if(state.pickView==='ov') drawOverview(pickMap,{ev,arr,start:state.start});
   else drawCenter(pickMap,{ev,arr,view:'all',start:state.start});
 }
@@ -456,20 +460,23 @@ pickMap.addEventListener('click',evt=>{
   const [lat,lng]=UNP(loc.x,loc.y);
   state.start={name:'지도에서 찍은 위치',lat,lng,custom:true};
   const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom';
-  drawPick();
+  drawPick(); run(false);
 });
 
-/* ---------- UI: 시간 ---------- */
-const arrTime=document.getElementById('arrTime');
-const chips=document.getElementById('timeChips');
-const PRESETS=[['지금 출발','now'],['8:00까지','08:00'],['9:30까지','09:30'],['11:00까지','11:00']];
-chips.innerHTML=PRESETS.map(p=>`<button class="chip" type="button" data-t="${p[1]}">${p[0]}</button>`).join('');
-let nowMode=false;
-function syncChips(){ chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', nowMode?c.dataset.t==='now':c.dataset.t===state.arr)); }
-chips.onclick=e=>{ const b=e.target.closest('.chip'); if(!b) return;
-  if(b.dataset.t==='now'){ nowMode=true; } else { nowMode=false; state.arr=b.dataset.t; arrTime.value=state.arr; }
-  syncChips(); savePref(); };
-arrTime.onchange=()=>{ nowMode=false; state.arr=arrTime.value||'09:30'; syncChips(); savePref(); };
+/* ---------- UI: 시간 (기본: 지금 출발) ---------- */
+let nowMode=true; state.dep=null;
+const depTime=document.getElementById('depTime'), timeAuto=document.getElementById('timeAuto');
+function depBase(){ return state.dep==null?kstNow().min:state.dep; }
+function renderTimeAuto(){
+  const ev=state.ev, today=kstNow().date, t=hm(depBase());
+  const other=ev.id!=='none'&&ev.date&&ev.date!==today;
+  timeAuto.innerHTML=state.dep==null
+    ? `🕒 지금 <b>${t}</b>에 출발한다고 보고 안내해요${other?`<br><small>오늘은 대회 날이 아니라서 ${fmtDate(ev.date)} 같은 시각 기준으로 보여 드려요</small>`:''}`
+    : `🕒 <b>${t}</b>에 출발한다고 보고 안내해요${other?` <small>(${fmtDate(ev.date)})</small>`:''}`;
+}
+depTime.onchange=()=>{ if(!depTime.value) return; state.dep=m(depTime.value); nowMode=false; renderTimeAuto(); if(state.start) run(false); };
+document.getElementById('depNow').onclick=()=>{ state.dep=null; nowMode=true; depTime.value=''; renderTimeAuto(); if(state.start) run(false); };
+setInterval(()=>{ if(state.dep==null) renderTimeAuto(); },30000);
 
 /* ---------- 실행 ---------- */
 document.getElementById('goBtn').onclick=()=>{
@@ -478,11 +485,9 @@ document.getElementById('goBtn').onclick=()=>{
 };
 function run(scroll){
   const ev=state.ev;
-  let arr=m(state.arr);
-  if(nowMode){
-    const now=kstNow().min; arr=now+40;
-    for(let i=0;i<3;i++){ const p=plan(ev,state.start,arr); if(!p.list.length) break; arr=now+Math.round(p.list[0].total); }
-  }
+  const dep=depBase(); let arr=dep+40;
+  for(let i=0;i<3;i++){ const p=plan(ev,state.start,arr); if(!p.list.length) break; arr=dep+Math.round(p.list[0].total); }
+  renderTimeAuto();
   state.arrMin=arr;
   state.plan=plan(ev,state.start,arr);
   state.base=plan(NONE,state.start,arr);
@@ -564,9 +569,9 @@ function renderResult(fromLive){
   const rel=relevantClosures(ev,arr);
   const dep=arr-Math.round(r.total);
   const notToday=nowMode&&ev.id!=='none'&&ev.date!==kstNow().date;
-  const startLine=nowMode?`지금 출발하면 <b>${hm(arr)}</b>쯤 도착`:`<b>${hm(dep)}</b>쯤 출발하면 ${hm(arr)} 도착`;
+  const startLine=nowMode?`지금 출발하면 <b>${hm(arr)}</b>쯤 도착`:`<b>${hm(state.dep)}</b> 출발하면 ${hm(arr)}쯤 도착`;
   body.innerHTML=`
-    <div class="eyebrow" style="background:var(--route-soft);color:#1f5852">${esc(state.start.name)} 출발 · ${nowMode?'지금':hm(arr)+' 도착'}</div>
+    <div class="eyebrow" style="background:var(--route-soft);color:#1f5852">${esc(state.start.name)} 출발 · ${nowMode?'지금':hm(state.dep)}</div>
     <div class="result-head" style="margin-top:10px"><em>${esc(gate)}</em> 쪽으로 들어와서<br>${esc(finalApproach(r))} 오세요</div>
     <div class="meta">
       <span class="pill">약 ${Math.round(r.total)}분</span>
@@ -588,7 +593,7 @@ function renderResult(fromLive){
   const alts=document.getElementById('alts');
   alts.innerHTML=p.list.length>1?`<div class="note" style="margin-top:16px;font-weight:700;color:var(--ink)">다른 길</div>`+p.list.map((x,i)=>`<div class="alt-item ${i===state.sel?'on':''}" data-i="${i}"><div class="t">${esc(gateLabel(x.entry))} · 약 ${Math.round(x.total)}분</div><div class="d">${roadSteps(x).map(s=>esc(s.road)).join(' → ')}</div></div>`).join(''):'';
   alts.querySelectorAll('.alt-item').forEach(el=>el.onclick=()=>{ state.sel=+el.dataset.i; state.liveMode=null; renderResult(true); });
-  if(state.live){ const lf=(state.liveMode==='short'?state.live.short:state.live.fast)[state.sel]||state.live.fast[state.sel]; if(lf){ const pill=body.querySelector('.meta .pill'); if(pill) pill.textContent=`${state.ev.date&&state.ev.date>kstNow().date&&!nowMode?'예측':'실시간'} 약 ${Math.round(lf.sec/60)}분 · ${(lf.m/1000).toFixed(1)}km`; } }
+  if(state.live){ const lf=(state.liveMode==='short'?state.live.short:state.live.fast)[state.sel]||state.live.fast[state.sel]; if(lf){ const pill=body.querySelector('.meta .pill'); if(pill) pill.textContent=`${state.ev.date&&state.ev.date>kstNow().date?'예측':'실시간'} 약 ${Math.round(lf.sec/60)}분 · ${(lf.m/1000).toFixed(1)}km`; } }
   liveBoxRedraw();
   drawMain();
 }
@@ -619,7 +624,7 @@ function text(parent,x,y,str,fs,o={}){
 }
 function drawCenter(svg,o){
   svg.innerHTML='';
-  const ev=o.ev||NONE, arr=o.arr??m(state.arr);
+  const ev=o.ev||NONE, arr=o.arr??(depBase()+30);
   const r=o.route;
   // viewBox
   let x0,y0,x1,y1;
@@ -707,7 +712,7 @@ const HAN=[[37.6050,126.7900],[37.5850,126.8200],[37.5680,126.8500],[37.5550,126
 const OVB={lat0:37.43,lat1:37.71,lng0:126.76,lng1:127.19};
 function drawOverview(svg,o){
   svg.innerHTML='';
-  const ev=o.ev||NONE, arr=o.arr??m(state.arr), r=o.route;
+  const ev=o.ev||NONE, arr=o.arr??(depBase()+30), r=o.route;
   const a=P(OVB.lat1,OVB.lng0), b=P(OVB.lat0,OVB.lng1);
   const x0=a[0],y0=a[1],w=b[0]-a[0],h=b[1]-a[1];
   svg.setAttribute('viewBox',`${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
@@ -749,7 +754,7 @@ function renderTimeline(){
   if(ev.id==='none'){ box.innerHTML=''; return; }
   let a=Infinity,b=-Infinity; ev.segs.forEach(s=>{a=Math.min(a,m(s.from));b=Math.max(b,m(s.to));});
   a=Math.floor(a/60)*60; b=Math.ceil(b/60)*60; const span=b-a||60;
-  const mark=state.plan?state.arrMin:m(state.arr);
+  const mark=state.plan?state.arrMin:depBase()+30;
   const segs=ev.segs.slice().sort((x,y)=>(x.outer?1:0)-(y.outer?1:0)||m(x.from)-m(y.from));
   box.innerHTML=segs.map(s=>{ const on=overlaps(s,mark-30,mark);
     return `<div class="tl-row ${on&&!s.outer?'active':''}"><div class="tl-name">${esc(s.name)}${s.outer?'<small>교회와 먼 구간</small>':''}${s.est?'<small>추정</small>':''}</div>
@@ -760,9 +765,8 @@ function renderTimeline(){
 }
 
 /* ---------- 기억(이 기기) ---------- */
-function savePref(){ try{ localStorage.setItem('jg-route',JSON.stringify({start:state.start&&state.start.geo?null:state.start,arr:state.arr})); }catch(e){} }
+function savePref(){ try{ localStorage.setItem('jg-route',JSON.stringify({start:state.start&&state.start.geo?null:state.start})); }catch(e){} }
 function loadPref(){ try{ const p=JSON.parse(localStorage.getItem('jg-route')||'null'); if(!p) return;
-  if(p.arr){state.arr=p.arr;arrTime.value=p.arr;}
   if(p.start){ state.start=p.start;
     let found=false; REGIONS.forEach((g,gi)=>g[1].forEach((r,ri)=>{ if(r[0]===p.start.name){regionSel.value=gi+'-'+ri;found=true;} }));
     if(!found){ const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom'; } }
@@ -775,8 +779,8 @@ async function kakaoRoute(r,priority){
   const q=new URLSearchParams({origin:`${s.lng},${s.lat}`,destination:`${N('ch')[2]},${N('ch')[1]}`,waypoints:vias,priority,summary:'true'});
   let url='https://apis-navi.kakaomobility.com/v1/directions?'+q;
   const ev=state.ev, today=kstNow().date;
-  if(!nowMode && ev.date && ev.date>today){ // 미래 시점은 '미래 운행정보'로 예측
-    const dep=state.arrMin-Math.round(r.total); q.set('departure_time',ev.date.replace(/-/g,'')+hm(dep).replace(':',''));
+  if(ev.date && ev.date>today){ // 대회 날이 아직이면 '미래 운행정보'로 예측
+    const dep=depBase(); q.set('departure_time',ev.date.replace(/-/g,'')+hm(dep).replace(':',''));
     url='https://apis-navi.kakaomobility.com/v1/future/directions?'+q;
   }
   const res=await fetch(url,{headers:{Authorization:'KakaoAK '+KAKAO_REST_KEY}});
@@ -799,7 +803,7 @@ async function renderLive(){
     let fi=-1,si=-1; fast.forEach((x,i)=>{ if(x&&(fi<0||x.sec<fast[fi].sec)) fi=i; }); short.forEach((x,i)=>{ if(x&&(si<0||x.m<short[si].m)) si=i; });
     if(fi<0){ box.innerHTML='<div class="live"><div class="live-h">실시간 교통 정보를 받지 못했어요. 위의 예상 시간을 참고해 주세요.</div></div>'; return; }
     state.live={fast:fast,short:short,fi,si};
-    const future=!nowMode&&state.ev.date&&state.ev.date>kstNow().date;
+    const future=state.ev.date&&state.ev.date>kstNow().date;
     const opt=(key,i,x,label)=>`<button class="live-opt ${state.sel===i&&state.liveMode===key?'on':''}" type="button" data-lm="${key}" data-i="${i}"><b>${label}</b><span>${Math.round(x.sec/60)}분</span><small>${(x.m/1000).toFixed(1)}km · ${esc(gateLabel(list[i].entry))}</small></button>`;
     box.innerHTML=`<div class="live"><div class="live-h">${future?`카카오 교통 예측 (${fmtDate(state.ev.date)} 출발 시각 기준)`:'카카오 실시간 교통 기준'}</div><div class="live-opts">${opt('fast',fi,fast[fi],'⚡ 가장 빠른 길')}${opt('short',si,short[si],'📏 가장 짧은 길')}</div></div>`;
     box.querySelectorAll('[data-lm]').forEach(b=>b.onclick=()=>{ state.liveMode=b.dataset.lm; state.sel=+b.dataset.i; renderResult(true); });
@@ -831,10 +835,6 @@ geoBtn.onclick=()=>{
     gmsg(err.code===1?'위치 권한이 꺼져 있어요. 휴대폰 설정에서 위치 권한을 허용하거나, 아래에서 지역을 골라 주세요.':'위치를 찾지 못했어요. 아래에서 지역을 골라 주세요.',true);
   },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
 };
-/* 대회 당일이면 '지금 출발' 자동 선택 */
-function autoNow(){
-  const t=kstNow(); if(state.ev&&state.ev.date===t.date&&t.min>=240&&t.min<=840) nowMode=true;
-}
 /* ---------- 공유 ---------- */
 document.getElementById('shareBtn').onclick=async()=>{
   const url=location.href.split('#')[0], sm=document.getElementById('shareMsg');
@@ -845,7 +845,7 @@ document.getElementById('shareBtn').onclick=async()=>{
 };
 
 /* ---------- 시작 ---------- */
-fillEvents(); loadPref(); autoNow(); syncChips();
+fillEvents(); loadPref(); renderTimeAuto(); if(state.start) run(false);
 if(!state.start){ /* 기본값 없음 */ }
 window.__app={plan,NODES,EDGES,REGIONS,DATA,state,run,kakaoUrl,viaPoints,closuresFor,m};
 })();
