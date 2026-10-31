@@ -118,6 +118,9 @@ footer a{color:var(--brown)}
 .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
 .hdr .logo{width:104px;height:auto;flex:none}
 @media (max-width:360px){.hdr .logo{width:78px}}
+.mapbox.zoomable{overflow:auto;-webkit-overflow-scrolling:touch}
+.mapbox.zoomable.big{max-height:70vh}
+.mapbox.zoomable.big svg{width:240%;max-width:none}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -209,7 +212,7 @@ footer a{color:var(--brown)}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-8</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-9</span>
   </footer>
 </div>
 
@@ -449,13 +452,16 @@ function renderEvInfo(){
     <button class="btn ghost" type="button" id="evMapBtn" style="margin-top:12px;background:#fff">🗺 통제 구간 지도로 보기</button>
     <div id="evMapWrap" class="hidden">
       <div class="maptabs"><button class="chip on" data-ev="ct" type="button">교회 주변</button><button class="chip" data-ev="ov" type="button">서울 전체</button></div>
-      <div class="mapbox"><svg id="evMap"></svg></div>
-      <div class="legend"><span><i style="background:var(--stop)"></i>통제 구간</span><span><i style="background:#7A4E2D;width:10px;height:10px;border-radius:50%"></i>종교교회</span></div>
+      <div class="mapbox zoomable" id="evMapBox"><svg id="evMap"></svg></div>
+      <button class="chip" type="button" id="evZoom" style="margin-top:8px">🔍 크게 보기</button>
+      <div class="legend"><span><i style="background:var(--stop)"></i>통제 구간</span><span style="color:#B33A30;font-weight:700">07:46~10:29</span><span>통제 시간 (* 추정)</span></div>
     </div>`;
   let evView='ct';
-  const drawEv=()=>{ const svg=document.getElementById('evMap');
-    if(evView==='ov') drawOverview(svg,{ev:e,arr:0,allRed:true}); else drawCenter(svg,{ev:e,arr:0,view:'all',allRed:true}); };
+  const drawEv=()=>{ const svg=document.getElementById('evMap'), sc=document.getElementById('evMapBox').classList.contains('big')?2.4:1;
+    if(evView==='ov') drawOverview(svg,{ev:e,arr:0,allRed:true,scale:sc}); else drawCenter(svg,{ev:e,arr:0,view:'closures',allRed:true,scale:sc}); };
   const btn=document.getElementById('evMapBtn'), wrap=document.getElementById('evMapWrap');
+  const zb=document.getElementById('evZoom'), mb=document.getElementById('evMapBox');
+  zb.onclick=()=>{ const big=mb.classList.toggle('big'); zb.textContent=big?'🔍 원래 크기':'🔍 크게 보기'; drawEv(); if(big){ mb.scrollLeft=(mb.scrollWidth-mb.clientWidth)*0.4; mb.scrollTop=(mb.scrollHeight-mb.clientHeight)*0.45; } };
   btn.onclick=()=>{ const open=wrap.classList.toggle('hidden')===false; btn.textContent=open?'지도 닫기':'🗺 통제 구간 지도로 보기'; if(open) drawEv(); };
   box.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{ evView=b.dataset.ev; box.querySelectorAll('[data-ev]').forEach(x=>x.classList.toggle('on',x===b)); drawEv(); });
 }
@@ -674,12 +680,15 @@ function drawCenter(svg,o){
   if(o.view==='route'&&r){
     const ps=[]; r.edges.forEach(id=>EMAP[id].xy.forEach(p=>ps.push(p))); ps.push(PN('ch'),PN('ghm'),PN('sjr'));
     fit(ps);
+  } else if(o.view==='closures'){
+    const ps=[PN('ch'),PN('gbg'),[PN('ch')[0]-650,PN('ch')[1]]]; ev.segs.filter(x=>!x.outer).forEach(sg=>{ segPolysXY(sg).forEach(pl=>pl.forEach(p=>ps.push(p))); (sg.nodes||[]).forEach(id=>ps.push(PN(id))); });
+    fit(ps);
   } else { const b=bboxNodes(); x0=b[0];y0=b[1];x1=b[2];y1=b[3]; }
   let w=x1-x0,h=y1-y0; const pad=Math.max(w,h)*0.08+250; x0-=pad;y0-=pad;w+=pad*2;h+=pad*2;
   const ratio=0.78; if(h<w*ratio){ const d=w*ratio-h; y0-=d/2; h=w*ratio; } else { const d=h/ratio-w; x0-=d/2; w=h/ratio; }
   if(w<1800){ const d=1800-w; x0-=d/2; w=1800; const hh=w*ratio; y0-=(hh-h)/2; h=hh; }
   svg.setAttribute('viewBox',`${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
-  const U=w/360; // 1 화면px 근사
+  const U=w/360/(o.scale||1); // 1 화면px 근사
   el('rect',{x:x0,y:y0,width:w,height:h,fill:'#F3ECDF'},svg);
   PARKS.forEach(pk=>el('polygon',{points:pts2(pk.map(p=>P(p[0],p[1]))),fill:'#DCE6CF',opacity:.85},svg));
   el('polyline',{points:pts2(STREAM.map(p=>P(p[0],p[1]))),fill:'none',stroke:'#B7D3DF','stroke-width':U*2.2,'stroke-linecap':'round'},svg);
@@ -747,6 +756,35 @@ function drawCenter(svg,o){
   el('circle',{cx:c[0],cy:c[1],r:k,fill:'#7A4E2D',stroke:'#fff','stroke-width':U*1.8},svg);
   el('path',{d:`M${c[0]},${c[1]-k*.55}V${c[1]+k*.55}M${c[0]-k*.38},${c[1]-k*.18}H${c[0]+k*.38}`,stroke:'#fff','stroke-width':U*1.5,'stroke-linecap':'round'},svg);
   text(svg,c[0]-k*1.3,c[1]+fs*0.35,'종교교회',fs*1.15,{anchor:'end',fill:'#7A4E2D',w:800});
+  if(o.allRed) segTimeLabels(svg,ev.segs.filter(x=>!x.outer),U,fs*0.95,[x0,y0,w,h],true);
+}
+/* 통제 시간 라벨 */
+function segTimeLabels(svg,segs,U,fs,box,withName){
+  const placed=[];
+  segs.forEach((sg,i)=>{
+    let pts=[]; segPolysXY(sg).forEach(pl=>pts=pts.concat(pl));
+    (sg.nodes||[]).forEach(id=>pts.push(PN(id)));
+    if(!pts.length) return;
+    const fr=[.5,.3,.7,.4,.6,.2,.8][i%7];
+    const j=Math.min(pts.length-1,Math.floor(pts.length*fr)); let p=pts[j];
+    const nm=withName&&sg.name?sg.name.split(/[ (]/)[0]+' ':'';
+    const label=nm+`${sg.from}~${sg.to}`+(sg.est?'*':'');
+    const tw=label.length*fs*0.6+fs*0.9, th=fs*1.45;
+    const a=pts[Math.max(0,j-1)], b2=pts[Math.min(pts.length-1,j+1)]; let dx=b2[0]-a[0], dy=b2[1]-a[1]; const L=Math.hypot(dx,dy)||1;
+    let nx=-dy/L, ny=dx/L; if(!(sg.nodes&&sg.nodes.length&&!pts.length-1)) {} const side=i%2?1:-1;
+    const off=Math.abs(ny)>0.6?th*1.0:tw*0.6;
+    let x=p[0]+nx*side*off, y=p[1]+ny*side*off;
+    if(L<1){ x=p[0]; y=p[1]-th; }
+    // 겹침 피하기
+    for(let k=0;k<8;k++){ const hit=placed.find(q=>Math.abs(q[0]-x)<(q[2]+tw)/2&&Math.abs(q[1]-y)<th); if(!hit) break; y+=(k%2?-1:1)*th*(k+1); }
+    x=Math.min(Math.max(x,box[0]+tw/2+U*2),box[0]+box[2]-tw/2-U*2);
+    y=Math.min(Math.max(y,box[1]+th),box[1]+box[3]-th*0.6);
+    placed.push([x,y,tw]);
+    el('line',{x1:p[0],y1:p[1],x2:x,y2:y,stroke:'#D2544A','stroke-width':U*0.8,opacity:.7},svg);
+    el('rect',{x:x-tw/2,y:y-th/2,width:tw,height:th,rx:th/2,fill:'#fff',stroke:'#D2544A','stroke-width':U*0.9},svg);
+    const t=el('text',{x,y:y+fs*0.36,'font-size':fs,'text-anchor':'middle','font-weight':800,fill:'#B33A30','font-family':'Noto Sans KR, sans-serif'},svg);
+    t.textContent=label;
+  });
 }
 
 /* ---------- 지도: 서울 전체 ---------- */
@@ -758,7 +796,7 @@ function drawOverview(svg,o){
   const a=P(OVB.lat1,OVB.lng0), b=P(OVB.lat0,OVB.lng1);
   const x0=a[0],y0=a[1],w=b[0]-a[0],h=b[1]-a[1];
   svg.setAttribute('viewBox',`${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
-  const U=w/360, fs=U*11;
+  const U=w/360/(o.scale||1), fs=U*11;
   el('rect',{x:x0,y:y0,width:w,height:h,fill:'#F3ECDF'},svg);
   el('polyline',{points:pts2(HAN.map(p=>P(p[0],p[1]))),fill:'none',stroke:'#C6DCE6','stroke-width':U*9,'stroke-linecap':'round','stroke-linejoin':'round'},svg);
   text(svg,P(37.5180,126.9700)[0],P(37.5180,126.9700)[1]+U*14,'한강',fs,{fill:'#6f98ab',w:700});
@@ -787,6 +825,11 @@ function drawOverview(svg,o){
   const c=PN('ch');
   el('circle',{cx:c[0],cy:c[1],r:U*5,fill:'#7A4E2D',stroke:'#fff','stroke-width':U*1.5},svg);
   text(svg,c[0],c[1]-U*8,'종교교회',fs*1.1,{fill:'#7A4E2D',w:800});
+  if(o.allRed){
+    segTimeLabels(svg,ev.segs.filter(x=>x.outer),U,fs*0.85,[x0,y0,w,h]);
+    const inner=ev.segs.filter(x=>!x.outer); if(inner.length){ let a=Infinity,b=-Infinity; inner.forEach(x=>{a=Math.min(a,m(x.from));b=Math.max(b,m(x.to));});
+      segTimeLabels(svg,[{from:hm(a),to:hm(b),nodes:['j4']}],U,fs*0.85,[x0,y0,w,h]); }
+  }
 }
 
 /* ---------- 통제 타임라인 ---------- */
