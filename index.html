@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>마라톤 날, 종교교회 오는 길</title>
+<title>마라톤으로 고생하는 교인들을 위해 만든 교회로 가는 가장 빠른 길</title>
 <meta name="description" content="마라톤 교통통제를 피해 종교교회로 오는 가장 빠른 길을 알려 드려요.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="마라톤 날, 종교교회 오는 길">
+<meta property="og:title" content="마라톤으로 고생하는 교인들을 위해 만든 교회로 가는 가장 빠른 길">
 <meta property="og:description" content="통제 구간을 피해 교회로 들어오는 길 · 내 위치에서 바로 길안내">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,6 +90,14 @@ ol.path li small{display:block;color:var(--muted);font-size:13px}
 .pickhint{font-size:13.5px;color:var(--route);font-weight:700;margin-top:8px}
 footer{font-size:12.5px;color:var(--muted);margin-top:28px;line-height:1.7}
 footer a{color:var(--brown)}
+.live{border-radius:16px;background:#fff;border:1.5px solid var(--line);padding:14px}
+.live-h{font-size:13.5px;color:var(--muted);font-weight:700;margin-bottom:10px}
+.live-opts{display:flex;gap:8px}
+.live-opt{flex:1;border:1.5px solid var(--line);border-radius:14px;padding:12px 10px;background:#fff;font:inherit;text-align:left;cursor:pointer;color:var(--ink)}
+.live-opt.on{border-color:var(--route);background:var(--route-soft)}
+.live-opt b{display:block;font-size:13.5px;color:var(--muted);font-weight:700}
+.live-opt span{display:block;font-size:22px;font-weight:800;margin-top:2px;letter-spacing:-0.02em}
+.live-opt small{display:block;font-size:12.5px;color:var(--muted)}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -105,7 +113,7 @@ footer a{color:var(--brown)}
 <div class="wrap">
   <header>
     <span class="eyebrow">종교교회 · 주일 교통 안내</span>
-    <h1>마라톤 날,<br>교회 오는 가장 빠른 길</h1>
+    <h1><span style="font-size:17px;font-weight:700;color:var(--brown);display:block;margin-bottom:4px">마라톤으로 고생하는 교인들을 위해 만든</span>교회로 가는 가장 빠른 길</h1>
     <div class="sub">출발 지역과 도착 시각만 고르면, 통제 구간을 피해 들어오는 길을 알려 드려요.</div>
   </header>
 
@@ -148,6 +156,7 @@ footer a{color:var(--brown)}
       <span><i style="background:var(--stop)"></i>이 시간 통제</span>
       <span><i style="background:#E8B4AC"></i>다른 시간 통제</span>
     </div>
+    <div id="liveBox" class="hidden" style="margin-top:16px"></div>
     <a class="btn alt" id="kakaoBtn" href="#" target="_blank" rel="noopener">카카오맵으로 길안내 시작</a>
     <div class="note" id="kakaoNote"></div>
     <div class="alts" id="alts"></div>
@@ -468,8 +477,9 @@ function run(scroll){
   state.arrMin=arr;
   state.plan=plan(ev,state.start,arr);
   state.base=plan(NONE,state.start,arr);
-  state.sel=0;
+  state.sel=0; state.live=null; state.liveMode=null;
   renderResult();
+  renderLive();
   renderTimeline();
   if(scroll) document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -505,7 +515,7 @@ function kakaoUrl(r){
 function relevantClosures(ev,arr){
   return ev.segs.filter(s=>!s.outer && overlaps(s,arr-30,arr));
 }
-function renderResult(){
+function renderResult(fromLive){
   const card=document.getElementById('resultCard'), body=document.getElementById('resultBody');
   card.classList.remove('hidden');
   const p=state.plan, ev=state.ev, arr=state.arrMin;
@@ -543,7 +553,9 @@ function renderResult(){
   document.getElementById('kakaoNote').innerHTML=`카카오맵이 열리면 경유지(${viaPoints(r).map(id=>esc(N(id)[0])).join(' → ')})가 들어가 있어요.`+(state.start.geo?'':` 출발지는 '내 위치'로 바꾸면 더 정확합니다.`);
   const alts=document.getElementById('alts');
   alts.innerHTML=p.list.length>1?`<div class="note" style="margin-top:16px;font-weight:700;color:var(--ink)">다른 길</div>`+p.list.map((x,i)=>`<div class="alt-item ${i===state.sel?'on':''}" data-i="${i}"><div class="t">${esc(gateLabel(x.entry))} · 약 ${Math.round(x.total)}분</div><div class="d">${roadSteps(x).map(s=>esc(s.road)).join(' → ')}</div></div>`).join(''):'';
-  alts.querySelectorAll('.alt-item').forEach(el=>el.onclick=()=>{ state.sel=+el.dataset.i; renderResult(); });
+  alts.querySelectorAll('.alt-item').forEach(el=>el.onclick=()=>{ state.sel=+el.dataset.i; state.liveMode=null; renderResult(true); });
+  if(state.live){ const lf=(state.liveMode==='short'?state.live.short:state.live.fast)[state.sel]||state.live.fast[state.sel]; if(lf){ const pill=body.querySelector('.meta .pill'); if(pill) pill.textContent=`${state.ev.date&&state.ev.date>kstNow().date&&!nowMode?'예측':'실시간'} 약 ${Math.round(lf.sec/60)}분 · ${(lf.m/1000).toFixed(1)}km`; } }
+  liveBoxRedraw();
   drawMain();
 }
 document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ state.mapView=b.dataset.mv; document.querySelectorAll('[data-mv]').forEach(x=>x.classList.toggle('on',x===b)); drawMain(); });
@@ -643,7 +655,8 @@ function drawCenter(svg,o){
   });
   LANDMARKS.forEach(id=>{ const p=PN(id); if(p[0]<x0||p[0]>x0+w||p[1]<y0||p[1]>y0+h) return;
     el('circle',{cx:p[0],cy:p[1],r:U*1.6,fill:'#8B7B69'},svg);
-    text(svg,p[0],p[1]-U*4.5,N(id)[0].replace(/\(.*\)/,''),fs,{fill:'#4a3b2e',w:700}); });
+    const lb=N(id)[0].replace(/\(.*\)/,'').replace(/ (사거리|삼거리|오거리)$/,'');
+    text(svg,p[0]+(id==='gbg'?U*2:id==='ghm'?-U*1:0),p[1]-U*4.5,lb,fs,{fill:'#4a3b2e',w:700,anchor:id==='gbg'?'end':id==='ghm'?'start':'middle'}); });
   // 시작 위치(도심 안)
   if(o.start){ const sp=P(o.start.lat,o.start.lng); if(sp[0]>x0&&sp[0]<x0+w&&sp[1]>y0&&sp[1]<y0+h){
     el('circle',{cx:sp[0],cy:sp[1],r:U*5,fill:'#E8956B',stroke:'#fff','stroke-width':U*1.6},svg);
@@ -721,6 +734,49 @@ function loadPref(){ try{ const p=JSON.parse(localStorage.getItem('jg-route')||'
     if(!found){ const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom'; } }
 }catch(e){} }
 
+/* ---------- 카카오 실시간 교통 ---------- */
+const KAKAO_REST_KEY='';  // 카카오 디벨로퍼스 REST API 키를 넣으면 실시간 교통 기능이 켜집니다
+async function kakaoRoute(r,priority){
+  const s=state.start, vias=viaPoints(r).map(id=>`${N(id)[2]},${N(id)[1]}`).join('|');
+  const q=new URLSearchParams({origin:`${s.lng},${s.lat}`,destination:`${N('ch')[2]},${N('ch')[1]}`,waypoints:vias,priority,summary:'true'});
+  let url='https://apis-navi.kakaomobility.com/v1/directions?'+q;
+  const ev=state.ev, today=kstNow().date;
+  if(!nowMode && ev.date && ev.date>today){ // 미래 시점은 '미래 운행정보'로 예측
+    const dep=state.arrMin-Math.round(r.total); q.set('departure_time',ev.date.replace(/-/g,'')+hm(dep).replace(':',''));
+    url='https://apis-navi.kakaomobility.com/v1/future/directions?'+q;
+  }
+  const res=await fetch(url,{headers:{Authorization:'KakaoAK '+KAKAO_REST_KEY}});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const j=await res.json(); const rt=j.routes&&j.routes[0];
+  if(!rt||rt.result_code!==0) throw new Error((rt&&rt.result_msg)||'no route');
+  return {sec:rt.summary.duration,m:rt.summary.distance};
+}
+let liveToken=0;
+async function renderLive(){
+  const box=document.getElementById('liveBox');
+  if(!KAKAO_REST_KEY||!state.plan||!state.plan.list.length){ box.classList.add('hidden'); return; }
+  const tok=++liveToken; const list=state.plan.list;
+  box.classList.remove('hidden');
+  box.innerHTML='<div class="live"><div class="live-h">카카오 실시간 교통으로 시간을 확인하는 중…</div></div>';
+  try{
+    const fast=await Promise.all(list.map(r=>kakaoRoute(r,'TIME').catch(()=>null)));
+    const short=await Promise.all(list.map(r=>kakaoRoute(r,'DISTANCE').catch(()=>null)));
+    if(tok!==liveToken) return;
+    let fi=-1,si=-1; fast.forEach((x,i)=>{ if(x&&(fi<0||x.sec<fast[fi].sec)) fi=i; }); short.forEach((x,i)=>{ if(x&&(si<0||x.m<short[si].m)) si=i; });
+    if(fi<0){ box.innerHTML='<div class="live"><div class="live-h">실시간 교통 정보를 받지 못했어요. 위의 예상 시간을 참고해 주세요.</div></div>'; return; }
+    state.live={fast:fast,short:short,fi,si};
+    const future=!nowMode&&state.ev.date&&state.ev.date>kstNow().date;
+    const opt=(key,i,x,label)=>`<button class="live-opt ${state.sel===i&&state.liveMode===key?'on':''}" type="button" data-lm="${key}" data-i="${i}"><b>${label}</b><span>${Math.round(x.sec/60)}분</span><small>${(x.m/1000).toFixed(1)}km · ${esc(gateLabel(list[i].entry))}</small></button>`;
+    box.innerHTML=`<div class="live"><div class="live-h">${future?`카카오 교통 예측 (${fmtDate(state.ev.date)} 출발 시각 기준)`:'카카오 실시간 교통 기준'}</div><div class="live-opts">${opt('fast',fi,fast[fi],'⚡ 가장 빠른 길')}${opt('short',si,short[si],'📏 가장 짧은 길')}</div></div>`;
+    box.querySelectorAll('[data-lm]').forEach(b=>b.onclick=()=>{ state.liveMode=b.dataset.lm; state.sel=+b.dataset.i; renderResult(true); });
+    if(!state.liveMode){ state.liveMode='fast'; if(state.sel!==fi){ state.sel=fi; renderResult(true); } else box.querySelector('[data-lm=fast]').classList.add('on'); }
+  }catch(e){ if(tok===liveToken) box.innerHTML='<div class="live"><div class="live-h">실시간 교통 정보를 받지 못했어요. 위의 예상 시간을 참고해 주세요.</div></div>'; }
+}
+function liveBoxRedraw(){
+  const L=state.live, box=document.getElementById('liveBox'); if(!L) return;
+  box.querySelectorAll('[data-lm]').forEach(b=>b.classList.toggle('on',b.dataset.lm===state.liveMode&&+b.dataset.i===state.sel));
+}
+
 /* ---------- 현재 위치 ---------- */
 const geoBtn=document.getElementById('geoBtn'), geoMsg=document.getElementById('geoMsg');
 function gmsg(t,bad){ geoMsg.classList.remove('hidden'); geoMsg.textContent=t; geoMsg.style.color=bad?'#9b2f27':'#1f5852'; }
@@ -748,7 +804,7 @@ function autoNow(){
 /* ---------- 공유 ---------- */
 document.getElementById('shareBtn').onclick=async()=>{
   const url=location.href.split('#')[0], sm=document.getElementById('shareMsg');
-  const data={title:'마라톤 날, 종교교회 오는 길',text:'마라톤 통제를 피해 교회로 오는 가장 빠른 길을 알려 드려요.',url};
+  const data={title:'마라톤으로 고생하는 교인들을 위해 만든 교회로 가는 가장 빠른 길',text:'마라톤 통제를 피해 교회로 오는 가장 빠른 길을 알려 드려요.',url};
   try{ if(navigator.share){ await navigator.share(data); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
   try{ await navigator.clipboard.writeText(url); sm.textContent='링크를 복사했어요. 카카오톡에 붙여 넣어 주세요.'; sm.style.color='#1f5852'; }
   catch(e){ sm.textContent=url; sm.style.color='#1f5852'; }
