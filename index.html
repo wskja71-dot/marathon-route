@@ -228,7 +228,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-15</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-16</span>
   </footer>
 </div>
 
@@ -533,10 +533,16 @@ function lmake(id){
   }catch(e){ base=null; }
   if(!base) L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:'osm-soft',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
   map.setView(CH,13);
-  map.on('zoomend',()=>{ map.getContainer().classList.toggle('lowz',map.getZoom()<12.5); declutter(map); });
+  const pane=map.createPane('clos'); pane.style.zIndex=410; pane.style.opacity='0.6';
+  map.on('zoomend',()=>{ map.getContainer().classList.toggle('lowz',map.getZoom()<12.5); declutter(map); restyle(map); });
   return map;
 }
 const MAPS={};
+/* 줌에 따라 선 굵기 조절: 멀리 보면 얇게, 가까이 보면 굵게 */
+function wz(z,base){ return Math.max(2,Math.min(base, base*(z-10.5)/5)); }
+function restyle(map){ const z=map.getZoom(); map.eachLayer(l=>{ const k=l.options&&l.options.kind; if(!k||!l.setStyle) return;
+  if(k==='clos') l.setStyle({weight:wz(z,8)}); else if(k==='closOff') l.setStyle({weight:wz(z,5)});
+  else if(k==='route') l.setStyle({weight:wz(z,6)}); else if(k==='routeCase') l.setStyle({weight:wz(z,6)+4}); }); }
 function declutter(map){
   const els=[...map.getContainer().querySelectorAll('.lab span')]; const kept=[];
   els.forEach(sp=>{ sp.style.visibility=''; const r=sp.getBoundingClientRect(); if(!r.width) return;
@@ -550,8 +556,8 @@ const icoLab=(t,cls)=>L.divIcon({className:'lab '+(cls||''),html:'<span>'+esc(t)
 function lClosures(layer,ev,isOn,withLabels){
   ev.segs.forEach((sg,i)=>{
     const on=isOn(sg), pls=segLL(sg);
-    pls.forEach(pl=>L.polyline(pl,on?{color:'#E0675B',weight:7,opacity:1,lineCap:'round',lineJoin:'round'}:{color:'#E59A90',weight:5,opacity:.7,dashArray:'6 8'}).addTo(layer));
-    (sg.nodes||[]).forEach(id=>L.circleMarker([NODES[id][1],NODES[id][2]],{radius:7,color:'#fff',weight:2,fillColor:on?'#D2544A':'#E59A90',fillOpacity:1}).addTo(layer));
+    pls.forEach(pl=>L.polyline(pl,on?{pane:'clos',kind:'clos',color:'#D2443A',weight:7,opacity:1,lineCap:'round',lineJoin:'round'}:{pane:'clos',kind:'closOff',color:'#E59A90',weight:5,opacity:1,dashArray:'6 8'}).addTo(layer));
+    (sg.nodes||[]).forEach(id=>L.circleMarker([NODES[id][1],NODES[id][2]],{pane:'clos',radius:7,color:'#fff',weight:2,fillColor:on?'#D2544A':'#E59A90',fillOpacity:1}).addTo(layer));
     if(withLabels){
       let pts=[]; pls.forEach(pl=>pts=pts.concat(pl)); (sg.nodes||[]).forEach(id=>pts.push([NODES[id][1],NODES[id][2]]));
       if(!pts.length) return;
@@ -566,18 +572,18 @@ function drawEvL(e,view){
   const m=lmap('evL'); lClosures(m.layer,e,()=>true,true);
   L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(m.layer);
   const inner=[CH],all=[CH]; e.segs.forEach(sg=>{ segLL(sg).forEach(pl=>pl.forEach(p=>{ all.push(p); if(!sg.outer) inner.push(p); })); (sg.nodes||[]).forEach(id=>inner.push([NODES[id][1],NODES[id][2]])); });
-  setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(view==='ov'?all:inner),{paddingTopLeft:[70,30],paddingBottomRight:[30,30]}); setTimeout(()=>declutter(m.map),350); },30);
+  setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(view==='ov'?all:inner),{paddingTopLeft:[70,30],paddingBottomRight:[30,30]}); restyle(m.map); setTimeout(()=>declutter(m.map),350); },30);
 }
 function drawMainL(){
   const r=state.plan&&state.plan.list[state.sel], ev=state.ev, arr=state.arrMin;
   const m=lmap('mapL');
   lClosures(m.layer,ev,sg=>overlaps(sg,arr-30,arr),false);
   const pts=[CH];
-  if(r){ const lines=routeLines(r); lines.forEach(ll=>L.polyline(ll,{color:'#fff',weight:11,opacity:.9}).addTo(m.layer)); lines.forEach(ll=>{ L.polyline(ll,{color:'#2E7D74',weight:6}).addTo(m.layer); ll.forEach(p=>pts.push(p)); });
+  if(r){ const lines=routeLines(r); lines.forEach(ll=>L.polyline(ll,{kind:'routeCase',color:'#fff',weight:10,opacity:.9}).addTo(m.layer)); lines.forEach(ll=>{ L.polyline(ll,{kind:'route',color:'#2E7D74',weight:6}).addTo(m.layer); ll.forEach(p=>pts.push(p)); });
     if(state.mapView==='all'&&state.start){ const s=[state.start.lat,state.start.lng], e0=[NODES[r.entry][1],NODES[r.entry][2]]; L.polyline([s,e0],{color:'#2E7D74',weight:4,dashArray:'6 8',opacity:.8}).addTo(m.layer); pts.push(s); } }
   if(state.start) L.marker([state.start.lat,state.start.lng],{icon:icoSt()}).addTo(m.layer);
   L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(m.layer);
-  setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(pts),{padding:[24,24],maxZoom:16}); },30);
+  setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(pts),{padding:[24,24],maxZoom:16}); restyle(m.map); },30);
 }
 function drawPickL(){
   const first=!MAPS.pickL; const m=lmap('pickL');
