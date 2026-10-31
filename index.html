@@ -15,6 +15,8 @@
 <meta property="og:description" content="통제 구간을 피해 교회로 들어오는 길 · 내 위치에서 바로 길안내">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<script src="vendor/leaflet/leaflet.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -67,7 +69,7 @@ ol.path li small{display:block;color:var(--muted);font-size:13px}
 .avoid{margin-top:12px;background:var(--stop-soft);border-radius:14px;padding:12px 14px;font-size:14.5px;color:#7d2a22}
 .avoid b{color:#9b2f27}
 .mapbox{margin-top:14px;border-radius:18px;overflow:hidden;background:#F3ECDF;border:1px solid var(--line);position:relative}
-.mapbox svg{display:block;width:100%;height:auto;touch-action:manipulation}
+.mapbox > svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .maptabs{display:flex;gap:6px;margin-top:14px}
 .maptabs .chip{font-size:14px;padding:7px 13px}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin-top:10px}
@@ -120,7 +122,17 @@ footer a{color:var(--brown)}
 @media (max-width:360px){.hdr .logo{width:78px}}
 .mapbox.zoomable{overflow:auto;-webkit-overflow-scrolling:touch}
 .mapbox.zoomable.big{max-height:70vh}
-.mapbox.zoomable.big svg{width:240%;max-width:none}
+.mapbox.zoomable.big > svg{width:240%;max-width:none}
+.lmap{height:340px;width:100%;background:#EFE6D6}
+body.noleaf .lonly{display:none!important}
+body.leaf .svgonly{display:none!important}
+.pin-ch div{width:30px;height:30px;border-radius:50%;background:#7A4E2D;border:3px solid #fff;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pin-st div{width:20px;height:20px;border-radius:50%;background:#E8956B;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.lab{position:relative}
+.lab span{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;background:#fff;border:1.5px solid #D2544A;color:#B33A30;font:700 11px/1 "Noto Sans KR",sans-serif;padding:4px 7px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.lab.ch span{border-color:#7A4E2D;color:#7A4E2D;font-size:12px}
+.lowz .lab.inner{display:none}
+.leaflet-container{font-family:"Noto Sans KR",sans-serif}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -160,8 +172,8 @@ footer a{color:var(--brown)}
     </div>
     <div id="pickWrap" class="hidden">
       <div class="pickhint">아래 지도에서 출발 위치를 눌러 주세요. (도심 안이면 '도심 지도'에서 찍으면 더 정확해요)</div>
-      <div class="maptabs"><button class="chip on" data-pk="ov" type="button">서울 전체</button><button class="chip" data-pk="ct" type="button">도심 지도</button></div>
-      <div class="mapbox"><svg id="pickMap"></svg></div>
+      <div class="maptabs svgonly"><button class="chip on" data-pk="ov" type="button">서울 전체</button><button class="chip" data-pk="ct" type="button">도심 지도</button></div>
+      <div class="mapbox"><svg id="pickMap" class="svgonly"></svg><div class="lmap lonly" id="pickL"></div></div>
     </div>
 
     <div class="timeauto" id="timeAuto"></div>
@@ -175,8 +187,8 @@ footer a{color:var(--brown)}
 
   <section class="card hidden" id="resultCard">
     <div id="resultBody"></div>
-    <div class="maptabs"><button class="chip on" data-mv="route" type="button">교회 주변</button><button class="chip" data-mv="all" type="button">도심 전체</button><button class="chip" data-mv="ov" type="button">서울 전체</button></div>
-    <div class="mapbox"><svg id="map"></svg></div>
+    <div class="maptabs"><button class="chip on" data-mv="route" type="button">교회 주변</button><button class="chip" data-mv="all" type="button">출발지부터</button></div>
+    <div class="mapbox"><svg id="map" class="svgonly"></svg><div class="lmap lonly" id="mapL"></div></div>
     <div class="legend">
       <span><i style="background:var(--route)"></i>추천 길</span>
       <span><i style="background:var(--stop)"></i>이 시간 통제</span>
@@ -212,7 +224,7 @@ footer a{color:var(--brown)}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-11</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-12</span>
   </footer>
 </div>
 
@@ -452,18 +464,86 @@ function renderEvInfo(){
     <button class="btn ghost" type="button" id="evMapBtn" style="margin-top:12px;background:#fff">🗺 통제 구간 지도로 보기</button>
     <div id="evMapWrap" class="hidden">
       <div class="maptabs"><button class="chip on" data-ev="ct" type="button">교회 주변</button><button class="chip" data-ev="ov" type="button">서울 전체</button></div>
-      <div class="mapbox zoomable" id="evMapBox"><svg id="evMap"></svg></div>
-      <button class="chip" type="button" id="evZoom" style="margin-top:8px">🔍 크게 보기</button>
+      <div class="mapbox zoomable" id="evMapBox"><svg id="evMap" class="svgonly"></svg><div class="lmap lonly" id="evL"></div></div>
+      <button class="chip svgonly" type="button" id="evZoom" style="margin-top:8px">🔍 크게 보기</button>
+      <div class="note lonly" style="margin-top:6px">두 손가락으로 지도를 키우면 더 자세히 볼 수 있어요.</div>
       <div class="legend"><span><i style="background:var(--stop)"></i>통제 구간</span><span style="color:#B33A30;font-weight:700">07:46~10:29</span><span>통제 시간 (* 추정)</span></div>
     </div>`;
   let evView='ct';
-  const drawEv=()=>{ const svg=document.getElementById('evMap'), sc=document.getElementById('evMapBox').classList.contains('big')?2.4:1;
+  const drawEv=()=>{ if(LEAF){ drawEvL(e,evView); return; } const svg=document.getElementById('evMap'), sc=document.getElementById('evMapBox').classList.contains('big')?2.4:1;
     if(evView==='ov') drawOverview(svg,{ev:e,arr:0,allRed:true,scale:sc}); else drawCenter(svg,{ev:e,arr:0,view:'closures',allRed:true,scale:sc}); };
   const btn=document.getElementById('evMapBtn'), wrap=document.getElementById('evMapWrap');
   const zb=document.getElementById('evZoom'), mb=document.getElementById('evMapBox');
   zb.onclick=()=>{ const big=mb.classList.toggle('big'); zb.textContent=big?'🔍 원래 크기':'🔍 크게 보기'; drawEv(); if(big){ mb.scrollLeft=(mb.scrollWidth-mb.clientWidth)*0.4; mb.scrollTop=(mb.scrollHeight-mb.clientHeight)*0.45; } };
   btn.onclick=()=>{ const open=wrap.classList.toggle('hidden')===false; btn.textContent=open?'지도 닫기':'🗺 통제 구간 지도로 보기'; if(open) drawEv(); };
   box.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{ evView=b.dataset.ev; box.querySelectorAll('[data-ev]').forEach(x=>x.classList.toggle('on',x===b)); drawEv(); });
+}
+
+/* ---------- 실제 지도 (Leaflet + OpenStreetMap/CARTO) ---------- */
+const LEAF=!!window.L; document.body.classList.add(LEAF?'leaf':'noleaf');
+const CH=[NODES.ch[1],NODES.ch[2]];
+function segLL(sg){ const out=[]; (sg.edges||[]).forEach(id=>{ if(EMAP[id]) out.push(EMAP[id].pts); }); if(sg.poly) out.push(sg.poly); return out; }
+function routeLL(r){ const all=[]; r.edges.forEach((id,i)=>{ const e=EMAP[id]; let p=e.pts.slice(); if(e.a!==r.nodes[i]) p.reverse(); p.forEach(x=>all.push(x)); }); return all; }
+function lmake(id){
+  const map=L.map(id,{scrollWheelZoom:false,zoomSnap:0.5}); map.attributionControl.setPrefix(false);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+  map.setView(CH,13);
+  map.on('zoomend',()=>{ map.getContainer().classList.toggle('lowz',map.getZoom()<12.5); declutter(map); });
+  return map;
+}
+const MAPS={};
+function declutter(map){
+  const els=[...map.getContainer().querySelectorAll('.lab span')]; const kept=[];
+  els.forEach(sp=>{ sp.style.visibility=''; const r=sp.getBoundingClientRect(); if(!r.width) return;
+    const hit=kept.some(k=>!(r.right<k.left-2||r.left>k.right+2||r.bottom<k.top-1||r.top>k.bottom+1));
+    if(hit) sp.style.visibility='hidden'; else kept.push(r); });
+}
+function lmap(id){ if(!MAPS[id]){ MAPS[id]={map:lmake(id),layer:null}; } const m=MAPS[id]; if(m.layer) m.layer.remove(); m.layer=L.layerGroup().addTo(m.map); setTimeout(()=>m.map.invalidateSize(),0); return m; }
+const icoCh=()=>L.divIcon({className:'pin-ch',html:'<div>✝</div>',iconSize:[30,30],iconAnchor:[15,15]});
+const icoSt=()=>L.divIcon({className:'pin-st',html:'<div></div>',iconSize:[20,20],iconAnchor:[10,10]});
+const icoLab=(t,cls)=>L.divIcon({className:'lab '+(cls||''),html:'<span>'+esc(t)+'</span>',iconSize:[0,0]});
+function lClosures(layer,ev,isOn,withLabels){
+  ev.segs.forEach((sg,i)=>{
+    const on=isOn(sg), pls=segLL(sg);
+    pls.forEach(pl=>L.polyline(pl,on?{color:'#D2544A',weight:8,opacity:.6,lineCap:'round',lineJoin:'round'}:{color:'#E59A90',weight:5,opacity:.7,dashArray:'6 8'}).addTo(layer));
+    (sg.nodes||[]).forEach(id=>L.circleMarker([NODES[id][1],NODES[id][2]],{radius:7,color:'#fff',weight:2,fillColor:on?'#D2544A':'#E59A90',fillOpacity:1}).addTo(layer));
+    if(withLabels){
+      let pts=[]; pls.forEach(pl=>pts=pts.concat(pl)); (sg.nodes||[]).forEach(id=>pts.push([NODES[id][1],NODES[id][2]]));
+      if(!pts.length) return;
+      // 선 위 좌표를 촘촘히 보간해서 라벨 위치 잡기
+      const p=pts[Math.min(pts.length-1,Math.floor(pts.length*[.5,.3,.7,.4,.6,.2,.8][i%7]))];
+      const nm=sg.outer?'':sg.name.split(/[ (]/)[0]+' ';
+      L.marker(p,{icon:icoLab(nm+sg.from+'~'+sg.to+(sg.est?'*':''),sg.outer?'outer':'inner'),interactive:false,keyboard:false}).addTo(layer);
+    }
+  });
+}
+function drawEvL(e,view){
+  const m=lmap('evL'); lClosures(m.layer,e,()=>true,true);
+  L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(m.layer);
+  const inner=[CH],all=[CH]; e.segs.forEach(sg=>{ segLL(sg).forEach(pl=>pl.forEach(p=>{ all.push(p); if(!sg.outer) inner.push(p); })); (sg.nodes||[]).forEach(id=>inner.push([NODES[id][1],NODES[id][2]])); });
+  setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(view==='ov'?all:inner),{paddingTopLeft:[70,30],paddingBottomRight:[30,30]}); setTimeout(()=>declutter(m.map),350); },30);
+}
+function drawMainL(){
+  const r=state.plan&&state.plan.list[state.sel], ev=state.ev, arr=state.arrMin;
+  const m=lmap('mapL');
+  lClosures(m.layer,ev,sg=>overlaps(sg,arr-30,arr),false);
+  const pts=[CH];
+  if(r){ const ll=routeLL(r); L.polyline(ll,{color:'#fff',weight:11,opacity:.9}).addTo(m.layer); L.polyline(ll,{color:'#2E7D74',weight:6}).addTo(m.layer); ll.forEach(p=>pts.push(p));
+    if(state.mapView==='all'&&state.start){ const s=[state.start.lat,state.start.lng]; L.polyline([s,ll[0]],{color:'#2E7D74',weight:4,dashArray:'6 8',opacity:.8}).addTo(m.layer); pts.push(s); } }
+  if(state.start) L.marker([state.start.lat,state.start.lng],{icon:icoSt()}).addTo(m.layer);
+  L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(m.layer);
+  setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(pts),{padding:[24,24],maxZoom:16}); },30);
+}
+function drawPickL(){
+  const first=!MAPS.pickL; const m=lmap('pickL');
+  lClosures(m.layer,state.ev,sg=>overlaps(sg,depBase(),depBase()+60),false);
+  L.marker(CH,{icon:icoCh()}).addTo(m.layer);
+  if(state.start) L.marker([state.start.lat,state.start.lng],{icon:icoSt()}).addTo(m.layer);
+  if(first){
+    setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds([[37.45,126.80],[37.69,127.17]]); },30);
+    m.map.on('click',ev=>{ state.start={name:'지도에서 찍은 위치',lat:ev.latlng.lat,lng:ev.latlng.lng,custom:true};
+      const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom'; drawPickL(); run(false); });
+  }
 }
 
 /* ---------- UI: 출발지 ---------- */
@@ -479,6 +559,7 @@ const pickBtn=document.getElementById('pickBtn'), pickWrap=document.getElementBy
 pickBtn.onclick=()=>{ state.picking=!state.picking; pickWrap.classList.toggle('hidden',!state.picking); pickBtn.textContent=state.picking?'지도 닫기':'지도에서 직접 찍기'; if(state.picking) drawPick(); };
 document.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{ state.pickView=b.dataset.pk; document.querySelectorAll('[data-pk]').forEach(x=>x.classList.toggle('on',x===b)); drawPick(); });
 function drawPick(){
+  if(LEAF){ drawPickL(); return; }
   const ev=state.ev, arr=depBase()+30;
   if(state.pickView==='ov') drawOverview(pickMap,{ev,arr,start:state.start});
   else drawCenter(pickMap,{ev,arr,view:'all',start:state.start});
@@ -652,6 +733,7 @@ function renderResult(fromLive){
 }
 document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ state.mapView=b.dataset.mv; document.querySelectorAll('[data-mv]').forEach(x=>x.classList.toggle('on',x===b)); drawMain(); });
 function drawMain(){
+  if(LEAF){ drawMainL(); return; }
   const svg=document.getElementById('map');
   const r=state.plan&&state.plan.list[state.sel];
   if(state.mapView==='ov') drawOverview(svg,{ev:state.ev,arr:state.arrMin,start:state.start,route:r});
