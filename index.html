@@ -228,7 +228,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-17</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-18</span>
   </footer>
 </div>
 
@@ -504,18 +504,25 @@ function snapLine(approx,name,D){
     const cum=[0]; for(let i=1;i<XY.length;i++) cum.push(cum[i-1]+dist(XY[i-1],XY[i])); const total=cum[cum.length-1]||1;
     const along=p=>{ let best=Infinity,a=0; for(let i=1;i<XY.length;i++){ const A=XY[i-1],B=XY[i],dx=B[0]-A[0],dy=B[1]-A[1],L2=dx*dx+dy*dy; let t=L2?((p[0]-A[0])*dx+(p[1]-A[1])*dy)/L2:0; t=Math.max(0,Math.min(1,t)); const d=Math.hypot(p[0]-A[0]-t*dx,p[1]-A[1]-t*dy); if(d<best){best=d;a=cum[i-1]+t*Math.sqrt(L2);} } return a; };
     const cand=runs.map(r=>{ const xy=r.map(q=>P(q[0],q[1])); let len=0; for(let i=1;i<xy.length;i++) len+=dist(xy[i-1],xy[i]); const av=xy.map(along); return {r,len,lo:Math.min(...av),hi:Math.max(...av)}; })
-      .filter(c=>c.len>=40&&c.hi-c.lo>=30).sort((a,b)=>(b.hi-b.lo)-(a.hi-a.lo));
+      .filter(c=>c.len>=60&&c.hi-c.lo>=50&&(c.hi-c.lo)>=c.len*0.6).sort((a,b)=>(b.hi-b.lo)-(a.hi-a.lo));
     const chosen=[];
     cand.forEach(c=>{ let ov=0; chosen.forEach(k=>{ ov+=Math.max(0,Math.min(c.hi,k.hi)-Math.max(c.lo,k.lo)); }); if(ov<(c.hi-c.lo)*0.35) chosen.push(c); });
     const iv=chosen.map(c=>[c.lo,c.hi]).sort((a,b)=>a[0]-b[0]); let cov=0,cur=null; iv.forEach(v=>{ if(!cur||v[0]>cur[1]){ if(cur) cov+=cur[1]-cur[0]; cur=v.slice(); } else cur[1]=Math.max(cur[1],v[1]); }); if(cur) cov+=cur[1]-cur[0];
-    if(chosen.length&&cov/total>=0.6) res=chosen.map(c=>c.r); }
+    if(chosen.length&&cov/total>=0.6){
+      // 조각들을 대략선 진행 방향(시작→끝) 순서로 이어 붙여 한 줄로 만든다 (터널 등 빈 곳은 직선으로 연결)
+      const chain=[]; chosen.sort((a,b)=>a.lo-b.lo).forEach(c=>{ let r=c.r; const a0=along(P(r[0][0],r[0][1])), a1=along(P(r[r.length-1][0],r[r.length-1][1])); if(a0>a1) r=r.slice().reverse(); r.forEach(q=>chain.push(q)); });
+      // 구간 끝을 넘어가는 부분(교차로 너머로 이어지는 같은 도로)은 잘라냄
+      const trimmed=chain.filter(q=>{ const a=along(P(q[0],q[1])); return a>3&&a<total-3; });
+      res=[trimmed.length>=2?trimmed:chain]; } }
   SNAP[key]=res; return res;
 }
 function edgeLL(e){ return snapLine(e.pts,baseName(e.road),130)||[e.pts]; }
 function segLL(sg){ const out=[]; (sg.edges||[]).forEach(id=>{ if(EMAP[id]) edgeLL(EMAP[id]).forEach(l=>out.push(l)); });
   if(sg.poly){ let done=false; (sg.roads||[]).forEach(n=>{ const r=snapLine(sg.poly,n,170); if(r){ r.forEach(l=>out.push(l)); done=true; } }); if(!done) out.push(sg.poly); }
   return out; }
-function routeLines(r){ const out=[]; r.edges.forEach(id=>edgeLL(EMAP[id]).forEach(l=>out.push(l))); return out; }
+function routeLines(r){ const line=[];
+  r.edges.forEach((id,i)=>{ const e=EMAP[id]; let pts=[]; edgeLL(e).forEach(l=>pts=pts.concat(l)); if(e.a!==r.nodes[i]) pts=pts.slice().reverse(); pts.forEach(q=>line.push(q)); });
+  return [line]; }
 async function loadOSM(){
   try{ const c=JSON.parse(localStorage.getItem('osmRoads1')||'null'); if(c&&Date.now()-c.t<30*864e5&&c.d){ OSM=c.d; return true; } }catch(e){}
   const q=`[out:json][timeout:25];way["highway"]["name"~"^(${ROADNAMES.join('|')})$"](37.535,126.925,37.615,127.045);out geom;`;
@@ -536,9 +543,13 @@ function lmake(id){
     if(window.maplibregl&&L.maplibreGL){
       base=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/positron',attribution:'&copy; <a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
       const gl=base.getMaplibreMap&&base.getMaplibreMap();
-      if(gl) gl.on('load',()=>{ gl.getStyle().layers.forEach(l=>{
-        if(/shield|place_(city|capital|country|state)|place-(city|capital|country|state)|housenumber/i.test(l.id)){ try{ gl.setLayoutProperty(l.id,'visibility','none'); }catch(e){} return; }
-        if(l.layout&&l.layout['text-field']) try{ gl.setLayoutProperty(l.id,'text-field',['coalesce',['get','name:ko'],['get','name']]); }catch(e){} }); });
+      if(gl){ let done=false; const fix=()=>{ if(done||!gl.isStyleLoaded()) return; done=true;
+        gl.getStyle().layers.forEach(l=>{ if(l.type!=='symbol') return;
+          const tf=JSON.stringify((l.layout||{})['text-field']||''), info=l.id+' '+(l['source-layer']||'')+' '+JSON.stringify(l.filter||'');
+          const hide=/shield|housenumber/i.test(info)||/ref/.test(tf)||((l['source-layer']==='place')&&/city|capital|town|state|country|continent/i.test(info));
+          if(hide){ try{ gl.setLayoutProperty(l.id,'visibility','none'); }catch(e){} return; }
+          if((l.layout||{})['text-field']) try{ gl.setLayoutProperty(l.id,'text-field',['coalesce',['get','name:ko'],['get','name']]); }catch(e){} }); };
+        gl.on('load',fix); gl.on('styledata',fix); gl.on('idle',fix); setTimeout(fix,1500); }
     }
   }catch(e){ base=null; }
   if(!base) L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:'osm-soft',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
