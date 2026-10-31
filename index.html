@@ -35,7 +35,10 @@ select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
 .chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 15px;font:inherit;font-size:15px;color:var(--ink);cursor:pointer}
 .chip.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
 .btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:inherit;font-size:18px;font-weight:800;background:var(--route);color:#fff;cursor:pointer;margin-top:18px;text-align:center;text-decoration:none}
-.btn.alt{background:#FEE500;color:#191600}
+.btn.alt,.btn.kakao{background:#FEE500;color:#191600}
+.btn.nav{margin-top:10px;font-size:17px;padding:15px}
+.btn.naver{background:#03C75A;color:#fff}
+.btn.tmap{background:#2B2D42;color:#fff}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);font-size:15px;font-weight:700;padding:12px}
 .row{display:flex;gap:10px;align-items:center}
 .row > *{flex:1}
@@ -157,7 +160,13 @@ footer a{color:var(--brown)}
       <span><i style="background:#E8B4AC"></i>다른 시간 통제</span>
     </div>
     <div id="liveBox" class="hidden" style="margin-top:16px"></div>
-    <a class="btn alt" id="kakaoBtn" href="#" target="_blank" rel="noopener">카카오맵으로 길안내 시작</a>
+    <div id="navBtns">
+      <div class="note" style="margin:18px 0 0;font-weight:700;color:var(--ink)">길안내 앱 고르기</div>
+      <a class="btn nav kakao" id="kakaoBtn" href="#" target="_blank" rel="noopener">카카오맵으로 길안내</a>
+      <a class="btn nav naver" id="naverBtn" href="#">네이버 지도로 길안내</a>
+      <a class="btn nav tmap" id="tmapBtn" href="#">티맵으로 길안내</a>
+      <div class="msg hidden" id="navMsg"></div>
+    </div>
     <div class="note" id="kakaoNote"></div>
     <div class="alts" id="alts"></div>
   </section>
@@ -512,6 +521,29 @@ function kakaoUrl(r){
   parts.push(`${enc('종교교회')},${N('ch')[1]},${N('ch')[2]}`);
   return 'https://map.kakao.com/link/by/car/'+parts.join('/');
 }
+function naverUrl(r){
+  const s=state.start, q=new URLSearchParams();
+  if(s.geo||s.custom){ q.set('slat',s.lat.toFixed(6)); q.set('slng',s.lng.toFixed(6)); q.set('sname',s.geo?'내 위치':'출발'); } // 지역만 고른 경우 앱이 현재 위치에서 출발
+  q.set('dlat',N('ch')[1]); q.set('dlng',N('ch')[2]); q.set('dname','종교교회');
+  viaPoints(r).slice(0,5).forEach((id,i)=>{ q.set(`v${i+1}lat`,N(id)[1]); q.set(`v${i+1}lng`,N(id)[2]); q.set(`v${i+1}name`,N(id)[0]); });
+  q.set('appname',location.origin+location.pathname);
+  return 'nmap://route/car?'+q.toString().replace(/\+/g,'%20');
+}
+function tmapUrl(r){
+  const v=viaPoints(r), pen=r.nodes[r.nodes.length-2], pick=[...new Set([v[0],pen])].slice(0,2);
+  const q=new URLSearchParams(); q.set('rGoName','종교교회'); q.set('rGoX',N('ch')[2]); q.set('rGoY',N('ch')[1]);
+  pick.forEach((id,i)=>{ q.set(`rV${i+1}Name`,N(id)[0]); q.set(`rV${i+1}X`,N(id)[2]); q.set(`rV${i+1}Y`,N(id)[1]); });
+  return 'tmap://route?'+q.toString().replace(/\+/g,'%20');
+}
+/* 앱이 없어서 안 열리면 안내 */
+['naverBtn','tmapBtn'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',()=>{
+    const msg=document.getElementById('navMsg'); msg.classList.add('hidden');
+    const t=setTimeout(()=>{ if(document.visibilityState==='visible'){ msg.classList.remove('hidden'); msg.style.color='#9b2f27';
+      msg.textContent=(id==='naverBtn'?'네이버 지도':'티맵')+' 앱이 열리지 않았다면 앱이 설치되어 있지 않은 거예요. 앱스토어·플레이스토어에서 설치한 뒤 다시 눌러 주세요. 카카오톡 안에서 열었다면 오른쪽 아래 메뉴의 "다른 브라우저로 열기"를 이용해 주세요.'; } },2000);
+    document.addEventListener('visibilitychange',()=>clearTimeout(t),{once:true});
+  });
+});
 function relevantClosures(ev,arr){
   return ev.segs.filter(s=>!s.outer && overlaps(s,arr-30,arr));
 }
@@ -521,9 +553,9 @@ function renderResult(fromLive){
   const p=state.plan, ev=state.ev, arr=state.arrMin;
   if(!p.list.length){
     body.innerHTML=`<div class="result-head">차로 들어오기 어려운 시간이에요</div><div class="avoid">이 시간에는 교회 주변 도로가 모두 막혀요. 지하철(광화문역·경복궁역)을 이용하시거나, 통제 해제 시각 이후로 맞춰 오세요.</div>`;
-    document.getElementById('kakaoBtn').classList.add('hidden'); document.getElementById('alts').innerHTML=''; drawMain(); return;
+    document.getElementById('navBtns').classList.add('hidden'); document.getElementById('alts').innerHTML=''; drawMain(); return;
   }
-  document.getElementById('kakaoBtn').classList.remove('hidden');
+  document.getElementById('navBtns').classList.remove('hidden');
   const r=p.list[state.sel];
   const steps=roadSteps(r);
   const gate=gateLabel(r.entry);
@@ -550,7 +582,9 @@ function renderResult(fromLive){
     ${rel.length?`<div class="avoid"><b>이 시간 피해야 할 길</b><br>${rel.map(s=>`${esc(s.name)} <span style="white-space:nowrap">(${s.from}~${s.to}${s.est?', 추정':''})</span>`).join('<br>')}</div>`:(ev.id!=='none'?`<div class="avoid" style="background:var(--route-soft);color:#1f5852">이 시간에는 교회 주변 통제가 없어요. 평소 길로 오셔도 됩니다.</div>`:'')}
     ${r.nx?`<div class="note">바깥 마라톤 코스(${'잠실·광진·여의도 등'})를 가로지르는 구간이 있어 실제로는 더 걸릴 수 있어요. 카카오맵 안내를 따라 주세요.</div>`:''}`;
   document.getElementById('kakaoBtn').href=kakaoUrl(r);
-  document.getElementById('kakaoNote').innerHTML=`카카오맵이 열리면 경유지(${viaPoints(r).map(id=>esc(N(id)[0])).join(' → ')})가 들어가 있어요.`+(state.start.geo?'':` 출발지는 '내 위치'로 바꾸면 더 정확합니다.`);
+  document.getElementById('naverBtn').href=naverUrl(r);
+  document.getElementById('tmapBtn').href=tmapUrl(r);
+  document.getElementById('kakaoNote').innerHTML=`어느 앱이든 경유지(${viaPoints(r).map(id=>esc(N(id)[0])).join(' → ')})가 들어간 채로 열려요. 티맵은 경유지를 2곳까지만 넣을 수 있어 ${esc(N(viaPoints(r)[0])[0])}·${esc(N(r.nodes[r.nodes.length-2])[0])}만 들어갑니다.`+(state.start.geo?'':` 출발지는 앱에서 '내 위치'로 바꾸면 더 정확해요.`);
   const alts=document.getElementById('alts');
   alts.innerHTML=p.list.length>1?`<div class="note" style="margin-top:16px;font-weight:700;color:var(--ink)">다른 길</div>`+p.list.map((x,i)=>`<div class="alt-item ${i===state.sel?'on':''}" data-i="${i}"><div class="t">${esc(gateLabel(x.entry))} · 약 ${Math.round(x.total)}분</div><div class="d">${roadSteps(x).map(s=>esc(s.road)).join(' → ')}</div></div>`).join(''):'';
   alts.querySelectorAll('.alt-item').forEach(el=>el.onclick=()=>{ state.sel=+el.dataset.i; state.liveMode=null; renderResult(true); });
