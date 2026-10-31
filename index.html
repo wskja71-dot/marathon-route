@@ -110,6 +110,14 @@ footer a{color:var(--brown)}
 .timeauto b{color:var(--ink)}
 .deptime{margin-top:8px;font-size:14px;color:var(--muted)}
 .deptime summary{cursor:pointer;padding:4px 2px}
+.seglist{margin-top:12px;background:rgba(255,255,255,.6);border-radius:12px;padding:10px 12px}
+.seg-h{font-size:12.5px;font-weight:800;color:var(--brown);margin-bottom:4px}
+.seg-i{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-top:1px dashed rgba(122,78,45,.18)}
+.seg-i:first-of-type{border-top:0}
+.seg-i b{white-space:nowrap;font-variant-numeric:tabular-nums;color:#9b2f27;font-weight:700}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.hdr .logo{width:104px;height:auto;flex:none}
+@media (max-width:360px){.hdr .logo{width:78px}}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -124,8 +132,11 @@ footer a{color:var(--brown)}
 <body>
 <div class="wrap">
   <header>
-    <span class="eyebrow">종교교회 · 주일 교통 안내</span>
-    <h1><span style="font-size:17px;font-weight:700;color:var(--brown);display:block;margin-bottom:4px">마라톤으로 고생하는 교인들을 위해 만든</span>교회로 가는 가장 빠른 길</h1>
+    <div class="hdr">
+      <span class="eyebrow">마라톤 날 주일 교통 안내</span>
+      <img class="logo" src="logo.png" alt="종교교회 SINCE 1900">
+    </div>
+        <h1><span style="font-size:17px;font-weight:700;color:var(--brown);display:block;margin-bottom:4px">마라톤으로 고생하는 교인들을 위해 만든</span>교회로 가는 가장 빠른 길</h1>
     <div class="sub">출발 위치만 고르면, 지금 시각에 맞춰 통제 구간을 피해 들어오는 길을 알려 드려요.</div>
   </header>
 
@@ -198,7 +209,7 @@ footer a{color:var(--brown)}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-5</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-7</span>
   </footer>
 </div>
 
@@ -434,7 +445,24 @@ function renderEvInfo(){
   box.innerHTML=`<b>${esc(e.name)}</b>${dd?`<span class="badge">${dd}</span>`:''}
     <div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary||'')}</div>
     ${isFinite(a)?`<div style="margin-top:6px">교회 주변(도심) 통제: <b>${hm(a)} ~ ${hm(b)}</b></div>`:''}
-    ${e.pending?'<div class="pending">※ 구간별 세부 통제 시간이 아직 발표되지 않았어요. 발표되면 업데이트됩니다.</div>':''}`;
+    ${e.pending?'<div class="pending">※ 구간별 세부 통제 시간이 아직 발표되지 않았어요. 발표되면 업데이트됩니다.</div>':''}
+    <div class="seglist">
+      <div class="seg-h">교회 주변 통제 구간</div>
+      ${e.segs.filter(x=>!x.outer).map(x=>`<div class="seg-i"><span>${esc(x.name)}</span><b>${x.from}~${x.to}${x.est?' (추정)':''}</b></div>`).join('')||'<div class="seg-i"><span>발표 대기</span></div>'}
+      ${e.segs.some(x=>x.outer)?`<div class="seg-h" style="margin-top:10px">교회와 먼 구간</div>${e.segs.filter(x=>x.outer).map(x=>`<div class="seg-i"><span>${esc(x.name)}</span><b>${x.from}~${x.to}${x.est?' (추정)':''}</b></div>`).join('')}`:''}
+    </div>
+    <button class="btn ghost" type="button" id="evMapBtn" style="margin-top:12px;background:#fff">🗺 통제 구간 지도로 보기</button>
+    <div id="evMapWrap" class="hidden">
+      <div class="maptabs"><button class="chip on" data-ev="ct" type="button">교회 주변</button><button class="chip" data-ev="ov" type="button">서울 전체</button></div>
+      <div class="mapbox"><svg id="evMap"></svg></div>
+      <div class="legend"><span><i style="background:var(--stop)"></i>통제 구간</span><span><i style="background:#7A4E2D;width:10px;height:10px;border-radius:50%"></i>종교교회</span></div>
+    </div>`;
+  let evView='ct';
+  const drawEv=()=>{ const svg=document.getElementById('evMap');
+    if(evView==='ov') drawOverview(svg,{ev:e,arr:0,allRed:true}); else drawCenter(svg,{ev:e,arr:0,view:'all',allRed:true}); };
+  const btn=document.getElementById('evMapBtn'), wrap=document.getElementById('evMapWrap');
+  btn.onclick=()=>{ const open=wrap.classList.toggle('hidden')===false; btn.textContent=open?'지도 닫기':'🗺 통제 구간 지도로 보기'; if(open) drawEv(); };
+  box.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{ evView=b.dataset.ev; box.querySelectorAll('[data-ev]').forEach(x=>x.classList.toggle('on',x===b)); drawEv(); });
 }
 
 /* ---------- UI: 출발지 ---------- */
@@ -673,7 +701,7 @@ function drawCenter(svg,o){
   // 통제
   const gC=el('g',{},svg);
   ev.segs.forEach(s=>{
-    const on=overlaps(s,arr-30,arr);
+    const on=o.allRed||overlaps(s,arr-30,arr);
     segPolysXY(s).forEach(pl=>{
       el('polyline',{points:pts2(pl),fill:'none',stroke:on?'#D2544A':'#E8B4AC','stroke-width':U*(on?4.2:2.6),'stroke-linecap':'round','stroke-linejoin':'round','stroke-dasharray':on?'':`${U*5} ${U*4}`,opacity:on?1:.9},gC);
     });
@@ -749,7 +777,7 @@ function drawOverview(svg,o){
   const bb=bboxNodes();
   el('rect',{x:bb[0],y:bb[1],width:bb[2]-bb[0],height:bb[3]-bb[1],fill:'none',stroke:'#8B7B69','stroke-width':U*1,'stroke-dasharray':`${U*3} ${U*2}`,rx:U*3},svg);
   // 통제
-  ev.segs.forEach(s=>{ const on=overlaps(s,arr-90,arr);
+  ev.segs.forEach(s=>{ const on=o.allRed||overlaps(s,arr-90,arr);
     segPolysXY(s).forEach(pl=>el('polyline',{points:pts2(pl),fill:'none',stroke:on?'#D2544A':'#E8B4AC','stroke-width':U*(on?3.4:2.4),'stroke-linecap':'round','stroke-linejoin':'round'},svg)); });
   // 경로
   if(r&&o.start){
