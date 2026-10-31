@@ -198,6 +198,7 @@ body.leaf .svgonly{display:none!important}
       <span><i style="background:var(--stop)"></i>이 시간 통제</span>
       <span><i style="background:#E8B4AC"></i>다른 시간 통제</span>
     </div>
+    <div class="alts" id="alts"></div>
     <div id="liveBox" class="hidden" style="margin-top:16px"></div>
     <div id="navBtns">
       <div class="note" style="margin:18px 0 0;font-weight:700;color:var(--ink)">길안내 앱 고르기</div>
@@ -207,7 +208,6 @@ body.leaf .svgonly{display:none!important}
       <div class="msg hidden" id="navMsg"></div>
     </div>
     <div class="note" id="kakaoNote"></div>
-    <div class="alts" id="alts"></div>
   </section>
 
 
@@ -228,7 +228,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-18</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-19</span>
   </footer>
 </div>
 
@@ -421,7 +421,7 @@ function plan(ev,start,arr){
     const key=EMAP[r.edges[0]].road+'|'+r.nodes[r.nodes.length-2]+'|'+dirName(r.entry);
     const k2=r.edges.slice(0,2).join(',')+r.nodes[r.nodes.length-2];
     if(seen.has(key)||seen.has(k2)) continue; seen.add(key); seen.add(k2); out.push(r);
-    if(out.length>=3) break;
+    if(out.length>=2) break;
   }
   return {list:out,cl,polys};
 }
