@@ -167,7 +167,7 @@ footer a{color:var(--brown)}
     <div id="navBtns">
       <div class="note" style="margin:18px 0 0;font-weight:700;color:var(--ink)">길안내 앱 고르기</div>
       <a class="btn nav kakao" id="kakaoBtn" href="#" target="_blank" rel="noopener">카카오맵으로 길안내</a>
-      <a class="btn nav naver" id="naverBtn" href="#">네이버 지도로 길안내</a>
+      <a class="btn nav naver" id="naverBtn" href="#">네이버 지도 내비로 길안내</a>
       <a class="btn nav tmap" id="tmapBtn" href="#">티맵으로 길안내</a>
       <div class="msg hidden" id="navMsg"></div>
     </div>
@@ -198,7 +198,7 @@ footer a{color:var(--brown)}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-3</span>
   </footer>
 </div>
 
@@ -532,7 +532,7 @@ function naverUrl(r){
   q.set('dlat',N('ch')[1]); q.set('dlng',N('ch')[2]); q.set('dname','종교교회');
   viaPoints(r).slice(0,5).forEach((id,i)=>{ q.set(`v${i+1}lat`,N(id)[1]); q.set(`v${i+1}lng`,N(id)[2]); q.set(`v${i+1}name`,N(id)[0]); });
   q.set('appname',location.origin+location.pathname);
-  return 'nmap://route/car?'+q.toString().replace(/\+/g,'%20');
+  return 'nmap://navigation?'+q.toString().replace(/\+/g,'%20');
 }
 function tmapUrl(r){
   const v=viaPoints(r), pen=r.nodes[r.nodes.length-2], pick=[...new Set([v[0],pen])].slice(0,2);
@@ -540,6 +540,25 @@ function tmapUrl(r){
   pick.forEach((id,i)=>{ q.set(`rV${i+1}Name`,N(id)[0]); q.set(`rV${i+1}X`,N(id)[2]); q.set(`rV${i+1}Y`,N(id)[1]); });
   return 'tmap://route?'+q.toString().replace(/\+/g,'%20');
 }
+/* ---------- 카카오내비 (JavaScript 키가 있으면 내비 앱으로 바로 실행) ---------- */
+const KAKAO_JS_KEY='';  // 카카오 디벨로퍼스 '종교교회 길찾기' 앱의 JavaScript 키
+let kakaoReady=false;
+function setupKakaoNavi(){
+  const btn=document.getElementById('kakaoBtn');
+  if(!KAKAO_JS_KEY){ btn.textContent='카카오맵으로 길안내'; return; }
+  btn.textContent='카카오내비로 길안내';
+  const sc=document.createElement('script'); sc.src='https://t1.kakaocdn.net/kakao_js_sdk/2.8.4/kakao.min.js'; sc.crossOrigin='anonymous';
+  sc.onload=()=>{ try{ if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); kakaoReady=true; }catch(e){} };
+  document.head.appendChild(sc);
+  btn.addEventListener('click',e=>{
+    const r=state.plan&&state.plan.list[state.sel]; if(!kakaoReady||!r) return; // 준비 안 됐으면 카카오맵 링크로
+    e.preventDefault();
+    const vias=viaPoints(r).slice(-3).map(id=>({name:N(id)[0],x:N(id)[2],y:N(id)[1]}));
+    try{ Kakao.Navi.start({name:'종교교회',x:N('ch')[2],y:N('ch')[1],coordType:'wgs84',viaPoints:vias}); }
+    catch(err){ location.href=btn.href; }
+  });
+}
+setupKakaoNavi();
 /* 앱이 없어서 안 열리면 안내 */
 ['naverBtn','tmapBtn'].forEach(id=>{
   document.getElementById(id).addEventListener('click',()=>{
