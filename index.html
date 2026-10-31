@@ -212,7 +212,7 @@ footer a{color:var(--brown)}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-9</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-10</span>
   </footer>
 </div>
 
@@ -550,22 +550,25 @@ function viaPoints(r){
 }
 function kakaoUrl(r){
   const s=state.start; const enc=t=>encodeURIComponent(t.replace(/[,/]/g,' '));
-  const parts=[`${enc(s.geo?'내 위치':'출발 '+s.name)},${s.lat.toFixed(5)},${s.lng.toFixed(5)}`];
+  const parts=[`${enc(s.geo?'내 위치':s.custom?'지도에서 찍은 위치':s.name)},${s.lat.toFixed(5)},${s.lng.toFixed(5)}`];
   viaPoints(r).forEach(id=>parts.push(`${enc(N(id)[0])},${N(id)[1]},${N(id)[2]}`));
   parts.push(`${enc('종교교회')},${N('ch')[1]},${N('ch')[2]}`);
   return 'https://map.kakao.com/link/by/car/'+parts.join('/');
 }
 function naverUrl(r){
   const s=state.start, q=new URLSearchParams();
-  if(s.geo||s.custom){ q.set('slat',s.lat.toFixed(6)); q.set('slng',s.lng.toFixed(6)); q.set('sname',s.geo?'내 위치':'출발'); } // 지역만 고른 경우 앱이 현재 위치에서 출발
+  // 내 위치 출발: 바로 내비게이션 시작 / 다른 곳 출발: 그 출발지에서 시작하는 경로 화면으로
+  if(!s.geo){ q.set('slat',s.lat.toFixed(6)); q.set('slng',s.lng.toFixed(6)); q.set('sname',s.custom?'지도에서 찍은 위치':s.name); }
   q.set('dlat',N('ch')[1]); q.set('dlng',N('ch')[2]); q.set('dname','종교교회');
   viaPoints(r).slice(0,5).forEach((id,i)=>{ q.set(`v${i+1}lat`,N(id)[1]); q.set(`v${i+1}lng`,N(id)[2]); q.set(`v${i+1}name`,N(id)[0]); });
   q.set('appname',location.origin+location.pathname);
-  return 'nmap://navigation?'+q.toString().replace(/\+/g,'%20');
+  return (s.geo?'nmap://navigation?':'nmap://route/car?')+q.toString().replace(/\+/g,'%20');
 }
 function tmapUrl(r){
   const v=viaPoints(r), pen=r.nodes[r.nodes.length-2], pick=[...new Set([v[0],pen])].slice(0,2);
-  const q=new URLSearchParams(); q.set('rGoName','종교교회'); q.set('rGoX',N('ch')[2]); q.set('rGoY',N('ch')[1]);
+  const s=state.start, q=new URLSearchParams();
+  if(!s.geo){ q.set('rStName',s.custom?'지도에서 찍은 위치':s.name); q.set('rStX',s.lng.toFixed(6)); q.set('rStY',s.lat.toFixed(6)); }
+  q.set('rGoName','종교교회'); q.set('rGoX',N('ch')[2]); q.set('rGoY',N('ch')[1]);
   pick.forEach((id,i)=>{ q.set(`rV${i+1}Name`,N(id)[0]); q.set(`rV${i+1}X`,N(id)[2]); q.set(`rV${i+1}Y`,N(id)[1]); });
   return 'tmap://route?'+q.toString().replace(/\+/g,'%20');
 }
@@ -583,7 +586,9 @@ function setupKakaoNavi(){
     const r=state.plan&&state.plan.list[state.sel]; if(!kakaoReady||!r) return; // 준비 안 됐으면 카카오맵 링크로
     e.preventDefault();
     const vias=viaPoints(r).slice(-3).map(id=>({name:N(id)[0],x:N(id)[2],y:N(id)[1]}));
-    try{ Kakao.Navi.start({name:'종교교회',x:N('ch')[2],y:N('ch')[1],coordType:'wgs84',viaPoints:vias}); }
+    const st=state.start, opt={name:'종교교회',x:N('ch')[2],y:N('ch')[1],coordType:'wgs84',viaPoints:vias};
+    if(!st.geo){ opt.sX=st.lng; opt.sY=st.lat; }
+    try{ Kakao.Navi.start(opt); }
     catch(err){ location.href=btn.href; }
   });
 }
@@ -637,7 +642,7 @@ function renderResult(fromLive){
   document.getElementById('kakaoBtn').href=kakaoUrl(r);
   document.getElementById('naverBtn').href=naverUrl(r);
   document.getElementById('tmapBtn').href=tmapUrl(r);
-  document.getElementById('kakaoNote').innerHTML=`어느 앱이든 경유지(${viaPoints(r).map(id=>esc(N(id)[0])).join(' → ')})가 들어간 채로 열려요. 티맵은 경유지를 2곳까지만 넣을 수 있어 ${esc(N(viaPoints(r)[0])[0])}·${esc(N(r.nodes[r.nodes.length-2])[0])}만 들어갑니다.`+(state.start.geo?'':` 출발지는 앱에서 '내 위치'로 바꾸면 더 정확해요.`);
+  document.getElementById('kakaoNote').innerHTML=`어느 앱이든 경유지(${viaPoints(r).map(id=>esc(N(id)[0])).join(' → ')})가 들어간 채로 열려요. 티맵은 경유지를 2곳까지만 넣을 수 있어 ${esc(N(viaPoints(r)[0])[0])}·${esc(N(r.nodes[r.nodes.length-2])[0])}만 들어갑니다.`+(state.start.geo?'':` 출발지도 고르신 곳(${esc(state.start.custom?'지도에서 찍은 위치':state.start.name)})으로 들어가요. 지역을 고르셨다면 그 지역의 중심 지점이 출발지가 됩니다.`);
   const alts=document.getElementById('alts');
   alts.innerHTML=p.list.length>1?`<div class="note" style="margin-top:16px;font-weight:700;color:var(--ink)">다른 길</div>`+p.list.map((x,i)=>`<div class="alt-item ${i===state.sel?'on':''}" data-i="${i}"><div class="t">${esc(gateLabel(x.entry))} · 약 ${Math.round(x.total)}분</div><div class="d">${roadSteps(x).map(s=>esc(s.road)).join(' → ')}</div></div>`).join(''):'';
   alts.querySelectorAll('.alt-item').forEach(el=>el.onclick=()=>{ state.sel=+el.dataset.i; state.liveMode=null; renderResult(true); });
