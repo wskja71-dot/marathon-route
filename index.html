@@ -246,7 +246,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.01-3</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.01-4</span>
   </footer>
 </div>
 
@@ -1145,10 +1145,10 @@ document.getElementById('shareBtn').onclick=async()=>{
   }
   let deferred=null;
   window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferred=e;
-    show(`버튼 하나로 홈 화면에 아이콘이 생겨요.<br><button class="ibtn" type="button" id="installBtn">앱 설치하기</button>`);
+    show(`버튼 하나로 홈 화면에 아이콘이 생겨요.<br><button class="ibtn" type="button" id="installBtn">앱 설치하기</button><div style="margin-top:10px;font-size:13.5px;color:var(--muted)">‘안전하지 않은 앱’이라며 막히면: 앱 설치 대신 <b>바로가기</b>로 추가하세요. 크롬은 <span class="kbd">⋮</span> → '홈 화면에 추가' → <b>'바로가기 만들기'</b>, 삼성 인터넷은 <span class="kbd">≡</span> → '현재 페이지 추가' → <b>'홈 화면'</b>.</div>`);
     document.getElementById('installBtn').onclick=async()=>{ deferred.prompt(); try{ await deferred.userChoice; }catch(e){} card.classList.add('hidden'); };
   });
-  if(isAndroid) setTimeout(()=>{ if(!deferred) show(`크롬 오른쪽 위 <span class="kbd">⋮</span> 메뉴에서 <b>'앱 설치'</b> 또는 <b>'홈 화면에 추가'</b>를 누르세요.`); },2500);
+  if(isAndroid) setTimeout(()=>{ if(!deferred) show(`크롬 오른쪽 위 <span class="kbd">⋮</span> 메뉴에서 <b>'앱 설치'</b> 또는 <b>'홈 화면에 추가'</b>를 누르세요.<div style="margin-top:10px;font-size:13.5px;color:var(--muted)">‘안전하지 않은 앱’이라며 막히면: 앱 설치 대신 <b>바로가기</b>로 추가하세요. 크롬은 <span class="kbd">⋮</span> → '홈 화면에 추가' → <b>'바로가기 만들기'</b>, 삼성 인터넷은 <span class="kbd">≡</span> → '현재 페이지 추가' → <b>'홈 화면'</b>.</div>`); },2500);
   window.addEventListener('appinstalled',()=>card.classList.add('hidden'));
 })();
 
