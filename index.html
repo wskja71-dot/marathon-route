@@ -15,6 +15,14 @@
 <meta property="og:description" content="통제 구간을 피해 교회로 들어오는 길 · 내 위치에서 바로 길안내">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F5EFE5">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="종교교회 길찾기">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <script src="vendor/leaflet/leaflet.js"></script>
 <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
@@ -137,6 +145,10 @@ body.leaf .svgonly{display:none!important}
 .lowz .lab.inner{display:none}
 .leaflet-container{font-family:"Noto Sans KR",sans-serif}
 .osm-soft{filter:saturate(.55) sepia(.12) brightness(1.03)}
+.install{position:relative;padding-right:40px}
+.xclose{position:absolute;right:10px;top:10px;border:0;background:transparent;font-size:16px;color:var(--muted);cursor:pointer;padding:6px}
+.ibtn{display:inline-block;margin-top:10px;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-size:15px;font-weight:800;background:var(--route);color:#fff;cursor:pointer;text-decoration:none}
+.kbd{display:inline-block;border:1.5px solid var(--line);border-radius:7px;padding:0 6px;background:#fff;font-weight:700}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -158,6 +170,12 @@ body.leaf .svgonly{display:none!important}
         <h1><span style="font-size:17px;font-weight:700;color:var(--brown);display:block;margin-bottom:4px">마라톤으로 고생하는 교인들을 위해 만든</span>교회로 가는 가장 빠른 길</h1>
     <div class="sub">출발 위치만 고르면, 지금 시각에 맞춰 통제 구간을 피해 들어오는 길을 알려 드려요.</div>
   </header>
+
+  <section class="card install hidden" id="installCard">
+    <button class="xclose" id="installX" type="button" aria-label="닫기">✕</button>
+    <div class="tip"><div class="ico"><img src="icons/icon-192.png" alt="" style="width:38px;height:38px;border-radius:10px"></div>
+      <div><b>휴대폰 홈 화면에 앱으로 설치하기</b><div id="installBody" style="margin-top:4px;font-size:14.5px"></div></div></div>
+  </section>
 
   <section class="card">
     <h2><span class="step">1</span>어느 대회인가요?</h2>
@@ -228,7 +246,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.10.31-20</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.01-1</span>
   </footer>
 </div>
 
@@ -1098,6 +1116,36 @@ document.getElementById('shareBtn').onclick=async()=>{
   try{ await navigator.clipboard.writeText(url); sm.textContent='링크를 복사했어요. 카카오톡에 붙여 넣어 주세요.'; sm.style.color='#1f5852'; }
   catch(e){ sm.textContent=url; sm.style.color='#1f5852'; }
 };
+
+/* ---------- 설치형 앱 (홈 화면에 추가) ---------- */
+(function(){
+  if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+  const card=document.getElementById('installCard'), body=document.getElementById('installBody');
+  const ua=navigator.userAgent||'';
+  const standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+  let closed=false; try{ closed=localStorage.getItem('jg-install-x')==='1'; }catch(e){}
+  if(standalone||closed) return;
+  const isIOS=/iPhone|iPad|iPod/i.test(ua), isAndroid=/Android/i.test(ua), inKakao=/KAKAOTALK/i.test(ua), inApp=inKakao||/NAVER|Instagram|FBAN|FBAV|Line\//i.test(ua);
+  const url=location.origin+location.pathname;
+  const show=html=>{ body.innerHTML=html; card.classList.remove('hidden'); };
+  document.getElementById('installX').onclick=()=>{ card.classList.add('hidden'); try{ localStorage.setItem('jg-install-x','1'); }catch(e){} };
+  if(inKakao){
+    show(`카카오톡 안에서는 설치가 안 돼요. 아래 버튼으로 ${isIOS?'사파리':'크롬'}에서 연 다음 설치해 주세요.<br><a class="ibtn" href="kakaotalk://web/openExternal?url=${encodeURIComponent(url)}">${isIOS?'사파리':'기본 브라우저'}로 열기</a>`);
+    return;
+  }
+  if(inApp){ show(`이 앱 안의 브라우저에서는 설치가 안 돼요. 오른쪽 위 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요.`); return; }
+  if(isIOS){
+    show(`사파리 아래쪽 <span class="kbd">공유 ⬆︎</span> 버튼을 누르고 <b>'홈 화면에 추가'</b>를 고르세요. 홈 화면에 생긴 아이콘으로 열면 앱처럼 쓸 수 있어요.`);
+    return;
+  }
+  let deferred=null;
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferred=e;
+    show(`버튼 하나로 홈 화면에 아이콘이 생겨요.<br><button class="ibtn" type="button" id="installBtn">앱 설치하기</button>`);
+    document.getElementById('installBtn').onclick=async()=>{ deferred.prompt(); try{ await deferred.userChoice; }catch(e){} card.classList.add('hidden'); };
+  });
+  if(isAndroid) setTimeout(()=>{ if(!deferred) show(`크롬 오른쪽 위 <span class="kbd">⋮</span> 메뉴에서 <b>'앱 설치'</b> 또는 <b>'홈 화면에 추가'</b>를 누르세요.`); },2500);
+  window.addEventListener('appinstalled',()=>card.classList.add('hidden'));
+})();
 
 /* ---------- 시작 ---------- */
 fillEvents(); loadPref(); renderTimeAuto(); if(state.start) run(false);

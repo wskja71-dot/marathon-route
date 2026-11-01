@@ -1,0 +1,16 @@
+{
+  "name": "교회로 가는 가장 빠른 길",
+  "short_name": "종교교회 길찾기",
+  "description": "마라톤 교통통제를 피해 종교교회로 오는 가장 빠른 길",
+  "lang": "ko",
+  "start_url": "./?source=app",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5EFE5",
+  "theme_color": "#F5EFE5",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
