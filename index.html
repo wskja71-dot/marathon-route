@@ -246,7 +246,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.01-1</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.01-2</span>
   </footer>
 </div>
 
@@ -1123,10 +1123,14 @@ document.getElementById('shareBtn').onclick=async()=>{
   const card=document.getElementById('installCard'), body=document.getElementById('installBody');
   const ua=navigator.userAgent||'';
   const standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
-  let closed=false; try{ closed=localStorage.getItem('jg-install-x')==='1'; }catch(e){}
-  if(standalone||closed) return;
   const isIOS=/iPhone|iPad|iPod/i.test(ua), isAndroid=/Android/i.test(ua), inKakao=/KAKAOTALK/i.test(ua), inApp=inKakao||/NAVER|Instagram|FBAN|FBAV|Line\//i.test(ua);
   const url=location.origin+location.pathname;
+  const fromKakao=/[?&]from=kakao/.test(location.search);
+  // 카카오톡 안에서 열리면 자동으로 사파리/크롬으로 다시 열기 (설치·내 위치가 거기서만 제대로 됨)
+  if(inKakao&&!standalone){ let tried=false; try{ tried=sessionStorage.getItem('jg-esc')==='1'; sessionStorage.setItem('jg-esc','1'); }catch(e){}
+    if(!tried){ location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(url+'?from=kakao'); } }
+  let closed=false; try{ closed=localStorage.getItem('jg-install-x')==='1'; }catch(e){}
+  if(standalone||(closed&&!fromKakao)) return;
   const show=html=>{ body.innerHTML=html; card.classList.remove('hidden'); };
   document.getElementById('installX').onclick=()=>{ card.classList.add('hidden'); try{ localStorage.setItem('jg-install-x','1'); }catch(e){} };
   if(inKakao){
@@ -1134,8 +1138,9 @@ document.getElementById('shareBtn').onclick=async()=>{
     return;
   }
   if(inApp){ show(`이 앱 안의 브라우저에서는 설치가 안 돼요. 오른쪽 위 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요.`); return; }
+  if(fromKakao){ card.style.borderColor='var(--route)'; card.style.boxShadow='0 0 0 2px var(--route)'; }
   if(isIOS){
-    show(`사파리 아래쪽 <span class="kbd">공유 ⬆︎</span> 버튼을 누르고 <b>'홈 화면에 추가'</b>를 고르세요. 홈 화면에 생긴 아이콘으로 열면 앱처럼 쓸 수 있어요.`);
+    show(`${fromKakao?'<b style="color:var(--route)">설치는 한 번만 하면 돼요!</b><br>':''}사파리 아래쪽 <span class="kbd">공유 ⬆︎</span> 버튼을 누르고 <b>'홈 화면에 추가'</b>를 고르세요. 홈 화면에 생긴 아이콘으로 열면 앱처럼 쓸 수 있어요.`);
     return;
   }
   let deferred=null;
