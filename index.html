@@ -149,6 +149,7 @@ body.leaf .svgonly{display:none!important}
 .xclose{position:absolute;right:10px;top:10px;border:0;background:transparent;font-size:16px;color:var(--muted);cursor:pointer;padding:6px}
 .ibtn{display:inline-block;margin-top:10px;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-size:15px;font-weight:800;background:var(--route);color:#fff;cursor:pointer;text-decoration:none}
 .kbd{display:inline-block;border:1.5px solid var(--line);border-radius:7px;padding:0 6px;background:#fff;font-weight:700}
+.shareico{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;border-radius:9px;background:#5f6368;color:#fff;vertical-align:-8px;margin:0 2px}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -246,7 +247,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     예상 시간은 거리로 어림한 값이에요. 실제 길안내는 카카오맵이 실시간 교통으로 다시 계산합니다. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.01-4</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.01-5</span>
   </footer>
 </div>
 
@@ -1140,7 +1141,7 @@ document.getElementById('shareBtn').onclick=async()=>{
   if(inApp){ show(`이 앱 안의 브라우저에서는 설치가 안 돼요. 오른쪽 위 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요.`); return; }
   if(fromKakao){ card.style.borderColor='var(--route)'; card.style.boxShadow='0 0 0 2px var(--route)'; }
   if(isIOS){
-    show(`${fromKakao?'<b style="color:var(--route)">설치는 한 번만 하면 돼요!</b><br>':''}사파리 아래쪽 <span class="kbd">공유 ⬆︎</span> 버튼을 누르고 <b>'홈 화면에 추가'</b>를 고르세요. 홈 화면에 생긴 아이콘으로 열면 앱처럼 쓸 수 있어요.`);
+    show(`${fromKakao?'<b style="color:var(--route)">설치는 한 번만 하면 돼요!</b><br>':''}사파리 주소창 옆의 공유 버튼 <span class="shareico" aria-label="공유 버튼"><svg width="20" height="22" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5v12"/><path d="M5.5 5.5L10 1.5l4.5 4"/><path d="M6.5 8.5H4.5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-2"/></svg></span> 을 누르고 <b>'홈 화면에 추가'</b>를 고르세요. 홈 화면에 생긴 아이콘으로 열면 앱처럼 쓸 수 있어요.`);
     return;
   }
   let deferred=null;
