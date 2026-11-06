@@ -190,8 +190,7 @@ body.leaf .svgonly{display:none!important}
     <h2><span class="step">2</span>어디서 출발하세요?</h2>
     <button class="btn" id="geoBtn" type="button" style="margin:0 0 12px;background:var(--apricot)">📍 지금 내 위치에서 출발</button>
     <div class="msg hidden" id="geoMsg"></div>
-    <label class="lbl">또는 출발 지역 고르기</label>
-    <select id="regionSel"></select>
+    <select id="regionSel" hidden aria-hidden="true" tabindex="-1"></select>
     <div class="row" style="margin-top:10px">
       <button class="btn ghost" id="pickBtn" type="button" style="margin:0">지도에서 직접 찍기</button>
     </div>
@@ -249,7 +248,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-7</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-8</span>
   </footer>
 </div>
 
@@ -704,7 +703,7 @@ setInterval(()=>{ if(state.dep==null) renderTimeAuto(); },30000);
 
 /* ---------- 실행 ---------- */
 document.getElementById('goBtn').onclick=()=>{
-  if(!state.start){ regionSel.focus(); regionSel.style.borderColor='var(--stop)'; setTimeout(()=>regionSel.style.borderColor='',1500); return; }
+  if(!state.start){ gmsg('현재 위치를 확인하거나 지도에서 출발지를 선택해 주세요.',true); geoBtn.focus(); return; }
   run(true);
 };
 function run(scroll){
@@ -1072,7 +1071,7 @@ function _unusedTimeline(){
 /* ---------- 기억(이 기기) ---------- */
 function savePref(){ try{ localStorage.setItem('jg-route',JSON.stringify({start:state.start&&state.start.geo?null:state.start})); }catch(e){} }
 function loadPref(){ try{ const p=JSON.parse(localStorage.getItem('jg-route')||'null'); if(!p) return;
-  if(p.start){ state.start=p.start;
+  if(p.start && p.start.custom){ state.start=p.start;
     let found=false; REGIONS.forEach((g,gi)=>g[1].forEach((r,ri)=>{ if(r[0]===p.start.name){regionSel.value=gi+'-'+ri;found=true;} }));
     if(!found){ const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom'; } }
 }catch(e){} }
@@ -1124,7 +1123,7 @@ function liveBoxRedraw(){
 const geoBtn=document.getElementById('geoBtn'), geoMsg=document.getElementById('geoMsg');
 function gmsg(t,bad){ geoMsg.classList.remove('hidden'); geoMsg.textContent=t; geoMsg.style.color=bad?'#9b2f27':'#1f5852'; }
 geoBtn.onclick=()=>{
-  if(!navigator.geolocation){ gmsg('이 브라우저에서는 위치를 쓸 수 없어요. 아래에서 지역을 골라 주세요.',true); return; }
+  if(!navigator.geolocation){ gmsg('이 브라우저에서는 위치를 쓸 수 없어요. 지도에서 출발지를 선택해 주세요.',true); return; }
   geoBtn.disabled=true; geoBtn.textContent='📍 위치 확인 중…';
   navigator.geolocation.getCurrentPosition(pos=>{
     geoBtn.disabled=false; geoBtn.textContent='📍 지금 내 위치에서 출발';
@@ -1137,7 +1136,7 @@ geoBtn.onclick=()=>{
     run(true);
   },err=>{
     geoBtn.disabled=false; geoBtn.textContent='📍 지금 내 위치에서 출발';
-    gmsg(err.code===1?'위치 권한이 꺼져 있어요. 휴대폰 설정에서 위치 권한을 허용하거나, 아래에서 지역을 골라 주세요.':'위치를 찾지 못했어요. 아래에서 지역을 골라 주세요.',true);
+    gmsg(err.code===1?'위치 권한이 꺼져 있어요. 휴대폰 설정에서 위치 권한을 허용하거나, 지도에서 출발지를 선택해 주세요.':'위치를 찾지 못했어요. 지도에서 출발지를 선택해 주세요.',true);
   },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
 };
 /* ---------- 공유 ---------- */
