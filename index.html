@@ -79,7 +79,7 @@ ol.path li:last-child:before{background:var(--brown);width:12px;height:12px;left
 ol.path li small{display:block;color:var(--muted);font-size:13px}
 .avoid{margin-top:12px;background:var(--stop-soft);border-radius:14px;padding:12px 14px;font-size:14.5px;color:#7d2a22}
 .avoid b{color:#9b2f27}
-.mapbox{margin-top:14px;border-radius:18px;overflow:hidden;background:#F3ECDF;border:1px solid var(--line);position:relative}
+.mapbox{margin:14px auto 0;max-width:340px;border-radius:18px;overflow:hidden;background:#F3ECDF;border:1px solid var(--line);position:relative}
 .mapbox > svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .maptabs{display:flex;gap:6px;margin-top:14px}
 .maptabs .chip{font-size:14px;padding:7px 13px}
@@ -134,7 +134,7 @@ footer a{color:var(--brown)}
 .mapbox.zoomable{overflow:auto;-webkit-overflow-scrolling:touch}
 .mapbox.zoomable.big{max-height:70vh}
 .mapbox.zoomable.big > svg{width:240%;max-width:none}
-.lmap{height:340px;width:100%;background:#EFE6D6}
+.lmap{height:auto;aspect-ratio:1 / 1;width:100%;background:#EFE6D6}
 body.noleaf .lonly{display:none!important}
 body.leaf .svgonly{display:none!important}
 .pin-ch div{width:30px;height:30px;border-radius:50%;background:#7A4E2D;border:3px solid #fff;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.25)}
@@ -170,7 +170,7 @@ body.leaf .svgonly{display:none!important}
       <img class="logo" src="logo.png" alt="종교교회 SINCE 1900">
     </div>
         <h1><span style="font-size:17px;font-weight:700;color:var(--brown);display:block;margin-bottom:4px">마라톤으로 고생하는 교인들을 위해 만든</span>교회로 가는 가장 빠른 길</h1>
-    <div class="sub">출발 위치만 고르면, 지금 시각에 맞춰 통제 구간을 피해 들어오는 길을 알려 드려요.</div>
+    
   </header>
 
   <section class="card install hidden" id="installCard">
@@ -249,7 +249,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-4</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-5</span>
   </footer>
 </div>
 
@@ -481,7 +481,7 @@ function renderEvInfo(){
   if(MAPS.pendingMap){ MAPS.pendingMap.map.remove(); delete MAPS.pendingMap; }
   const e=state.ev, box=document.getElementById('evInfo');
   if(e.id==='none'){ box.innerHTML='<b>등록된 대회 외</b><div>이 목록은 전체 교통통제 목록이 아닙니다. 출발 전 서울시 교통정보를 확인해 주세요.</div>'; return; }
-  if(e.pending){ box.innerHTML=`<b>${esc(e.name)}</b><span class="badge">${dday(e.date)}</span><div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary)}</div>${e.id==='freedom2026'?`<button class="btn ghost" type="button" id="pendingMapBtn" style="margin-top:10px;background:#fff">🗺 통제 영향 구간 지도 보기</button><div id="pendingMapWrap" class="hidden"><div class="mapbox"><div class="lmap" id="pendingMap"></div></div></div><div class="avoid" style="margin-top:8px"><details class="compact-detail"><summary>확인된 교통 영향 · <span class="more"></span></summary><div class="preview">동대문~종로~광화문, 서울광장·숭례문 일대 통제에 따른 버스 우회 예정</div></details><details class="compact-detail"><summary>버스 우회 안내 예시 · <span class="more"></span></summary><div class="preview">271번 07:30~09:00 · 370번 07:10~08:30 · 6002번 07:20~08:40</div><div>제공받은 버스 우회 안내문 기준이며 자동차 통제 시간과 다를 수 있습니다.</div></details></div>`:''}<div class="pending">차량 구간별 통제 시간과 진입 가능 여부는 아직 확인 중입니다. 앱의 우회 경로 계산은 제공되지 않습니다.</div>${(e.sources||[]).map(x=>`<div><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)} ↗</a></div>`).join('')}`; if(e.id==='freedom2026'){ const button=document.getElementById('pendingMapBtn'), wrap=document.getElementById('pendingMapWrap'); button.onclick=()=>{ const show=wrap.classList.toggle('hidden')===false; button.textContent=show?'지도 닫기':'🗺 통제 영향 구간 지도 보기'; if(!show)return; if(!LEAF){document.getElementById('pendingMap').textContent='지도를 불러오지 못했습니다. 아래 서울시 공지에서 확인해 주세요.';return;} drawImpactMap('pendingMap',false); }; } return; }
+  if(e.pending){ box.innerHTML=`<b>${esc(e.name)}</b><span class="badge">${dday(e.date)}</span><div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary)}</div>${e.id==='freedom2026'?`<button class="btn ghost" type="button" id="pendingMapBtn" style="margin-top:10px;background:#fff">🗺 통제 영향 구간 지도 보기</button><div id="pendingMapWrap" class="hidden"><div class="mapbox"><div class="lmap" id="pendingMap"></div></div></div><div class="avoid" style="margin-top:8px"><details class="compact-detail"><summary>확인된 교통 영향 · <span class="more"></span></summary><div class="preview">동대문~종로~광화문, 서울광장·숭례문 일대 통제에 따른 버스 우회 예정</div></details><details class="compact-detail"><summary>버스 우회 안내 예시 · <span class="more"></span></summary><div class="preview">271번 07:30~09:00 · 370번 07:10~08:30 · 6002번 07:20~08:40</div><div>제공받은 버스 우회 안내문 기준이며 자동차 통제 시간과 다를 수 있습니다.</div></details></div>`:''}<div class="pending">차량 통제 구간·시간 확인 중<br>우회 경로는 지도 앱에서 확인</div>${(e.sources||[]).map(x=>`<div><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)} ↗</a></div>`).join('')}`; if(e.id==='freedom2026'){ const button=document.getElementById('pendingMapBtn'), wrap=document.getElementById('pendingMapWrap'); button.onclick=()=>{ const show=wrap.classList.toggle('hidden')===false; button.textContent=show?'지도 닫기':'🗺 통제 영향 구간 지도 보기'; if(!show)return; if(!LEAF){document.getElementById('pendingMap').textContent='지도를 불러오지 못했습니다. 아래 서울시 공지에서 확인해 주세요.';return;} drawImpactMap('pendingMap',false); }; } return; }
   const dd=dday(e.date);
   const win=e.segs.filter(s=>!s.outer); let a=Infinity,b=-Infinity; win.forEach(s=>{a=Math.min(a,m(s.from));b=Math.max(b,m(s.to));});
   box.innerHTML=`<b>${esc(e.name)}</b>${dd?`<span class="badge">${dd}</span>`:''}
