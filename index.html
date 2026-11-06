@@ -248,7 +248,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-1</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-2</span>
   </footer>
 </div>
 
@@ -479,7 +479,7 @@ evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value); renderEvI
 function renderEvInfo(){
   const e=state.ev, box=document.getElementById('evInfo');
   if(e.id==='none'){ box.innerHTML='<b>등록된 대회 외</b><div>이 목록은 전체 교통통제 목록이 아닙니다. 출발 전 서울시 교통정보를 확인해 주세요.</div>'; return; }
-  if(e.pending){ box.innerHTML=`<b>${esc(e.name)}</b><span class="badge">${dday(e.date)}</span><div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary)}</div><div class="pending">구간별 통제 정보가 아직 충분히 확인되지 않아 우회 경로를 계산할 수 없습니다. 아래 공식 안내와 지도 앱에서 확인해 주세요.</div>${(e.sources||[]).map(x=>`<div><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)} ↗</a></div>`).join('')}`; return; }
+  if(e.pending){ box.innerHTML=`<b>${esc(e.name)}</b><span class="badge">${dday(e.date)}</span><div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary)}</div>${e.id==='freedom2026'?`<div class="avoid" style="margin-top:10px"><b>확인된 교통 영향</b><br>동대문~종로~광화문, 서울광장·숭례문 일대 통제에 따른 버스 우회 예정<br><br><b>버스 우회 안내 예시</b><br>271번: 07:30~09:00<br>370번: 07:10~08:30<br>6002번: 07:20~08:40<br><small>제공받은 노선별 우회 안내문 기준. 시각은 해당 버스의 우회 예정 시간이며 자동차 통제 시간과 다를 수 있습니다. 현장 상황에 따라 변경될 수 있습니다.</small></div>`:''}<div class="pending">차량 구간별 통제 시간과 진입 가능 여부는 아직 확인 중입니다. 앱의 우회 경로 계산은 제공되지 않습니다.</div>${(e.sources||[]).map(x=>`<div><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)} ↗</a></div>`).join('')}`; return; }
   const dd=dday(e.date);
   const win=e.segs.filter(s=>!s.outer); let a=Infinity,b=-Infinity; win.forEach(s=>{a=Math.min(a,m(s.from));b=Math.max(b,m(s.to));});
   box.innerHTML=`<b>${esc(e.name)}</b>${dd?`<span class="badge">${dd}</span>`:''}
@@ -701,7 +701,7 @@ function run(scroll){
   if(ev.pending || ev.id==='none'){
     state.plan=null; state.live=null;
     document.getElementById('resultCard').classList.remove('hidden');
-    document.getElementById('resultBody').innerHTML=`<div class="result-head">${ev.pending?'통제 정보를 확인해 주세요':'등록되지 않은 통제를 확인해 주세요'}</div><div class="avoid">${ev.pending?'도로별 통제 정보가 충분하지 않아 우회 경로를 안내할 수 없습니다.':'대회가 목록에 없더라도 도로 통제가 있을 수 있습니다.'} 출발 전 공식 안내와 지도 앱을 확인해 주세요.</div><a class="btn nav kakao" href="https://map.kakao.com/link/to/${encodeURIComponent('종교교회')},${N('ch')[1]},${N('ch')[2]}" target="_blank" rel="noopener noreferrer">카카오맵에서 종교교회 길찾기</a><div class="note">카카오맵에서 출발지를 선택해 주세요. 이 연결에는 앱의 통제 정보나 우회 경유지가 전달되지 않습니다.</div><p><a href="https://topis.seoul.go.kr/" target="_blank" rel="noopener noreferrer">서울시 교통정보 확인 ↗</a></p>`;
+    document.getElementById('resultBody').innerHTML=`<div class="result-head">${ev.pending?'통제 정보를 확인해 주세요':'등록되지 않은 통제를 확인해 주세요'}</div><div class="avoid">${ev.pending?(ev.id==='freedom2026'?'동대문·종로·광화문 일대에 통제와 버스 우회가 예정되어 있습니다. 차량의 구간별 통제 시간과 진입 가능 여부는 확인 중이라 앱의 우회 경로를 제공하지 않습니다.':'도로별 차량 통제 정보가 충분하지 않아 우회 경로를 안내할 수 없습니다.'):'대회가 목록에 없더라도 도로 통제가 있을 수 있습니다.'} 출발 전 공식 안내와 지도 앱을 확인해 주세요.</div><a class="btn nav kakao" href="https://map.kakao.com/link/to/${encodeURIComponent('종교교회')},${N('ch')[1]},${N('ch')[2]}" target="_blank" rel="noopener noreferrer">카카오맵에서 종교교회 길찾기</a><div class="note">카카오맵에서 출발지를 선택해 주세요. 이 연결에는 앱의 통제 정보나 우회 경유지가 전달되지 않습니다.</div><p><a href="https://topis.seoul.go.kr/" target="_blank" rel="noopener noreferrer">서울시 교통정보 확인 ↗</a></p>`;
     ['resultMapArea','navBtns','liveBox'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('alts').innerHTML=''; document.getElementById('kakaoNote').innerHTML='';
     if(scroll) document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'start'});
