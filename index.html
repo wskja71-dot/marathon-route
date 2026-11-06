@@ -150,6 +150,7 @@ body.leaf .svgonly{display:none!important}
 .ibtn{display:inline-block;margin-top:10px;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-size:15px;font-weight:800;background:var(--route);color:#fff;cursor:pointer;text-decoration:none}
 .kbd{display:inline-block;border:1.5px solid var(--line);border-radius:7px;padding:0 6px;background:#fff;font-weight:700}
 .shareico{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;border-radius:9px;background:#5f6368;color:#fff;vertical-align:-8px;margin:0 2px}
+.compact-detail{margin:8px 0;font-size:14px}.compact-detail summary{cursor:pointer;color:var(--brown);font-weight:700}.compact-detail .preview{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}.compact-detail[open] .preview{display:block;overflow:visible}.compact-detail .more::after{content:"더보기";color:var(--route);font-weight:700}.compact-detail[open] .more::after{content:"접기"}
 /* admin */
 .adm h3{font-size:15px;margin:18px 0 8px}
 .seg-row{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;background:#fff}
@@ -181,7 +182,7 @@ body.leaf .svgonly{display:none!important}
   <section class="card">
     <h2><span class="step">1</span>어느 대회인가요?</h2>
     <select id="evSel"></select>
-    <div class="note" style="margin-top:8px">대회 정보는 수동으로 등록합니다. 목록에 없어도 다른 통제가 있을 수 있으니 <a href="https://topis.seoul.go.kr/" target="_blank" rel="noopener">서울시 교통정보</a>를 확인해 주세요.</div>
+    
     <div id="evInfo" class="evbox"></div>
   </section>
 
@@ -213,7 +214,7 @@ body.leaf .svgonly{display:none!important}
     <div id="resultBody"></div>
     <div id="resultMapArea"><div class="maptabs"><button class="chip on" data-mv="route" type="button">교회 주변</button><button class="chip" data-mv="all" type="button">출발지부터</button></div>
     <div class="mapbox"><svg id="map" class="svgonly"></svg><div class="lmap lonly" id="mapL"></div></div>
-    <div class="legend">
+    <div class="legend" id="resultLegend">
       <span><i style="background:var(--route)"></i>추천 길</span>
       <span><i style="background:var(--stop)"></i>이 시간 통제</span>
       <span><i style="background:#E8B4AC"></i>다른 시간 통제</span>
@@ -248,7 +249,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-3</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.06-4</span>
   </footer>
 </div>
 
@@ -480,7 +481,7 @@ function renderEvInfo(){
   if(MAPS.pendingMap){ MAPS.pendingMap.map.remove(); delete MAPS.pendingMap; }
   const e=state.ev, box=document.getElementById('evInfo');
   if(e.id==='none'){ box.innerHTML='<b>등록된 대회 외</b><div>이 목록은 전체 교통통제 목록이 아닙니다. 출발 전 서울시 교통정보를 확인해 주세요.</div>'; return; }
-  if(e.pending){ box.innerHTML=`<b>${esc(e.name)}</b><span class="badge">${dday(e.date)}</span><div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary)}</div>${e.id==='freedom2026'?`<button class="btn ghost" type="button" id="pendingMapBtn" style="margin-top:10px;background:#fff">🗺 통제 영향 구간 지도 보기</button><div id="pendingMapWrap" class="hidden"><div class="note">붉은 점선은 버스 우회 안내에 언급된 종로 주변의 대략적인 영향 구간입니다. 실제 차로·통제 경계·시간은 다를 수 있습니다.</div><div class="mapbox"><div class="lmap" id="pendingMap"></div></div></div><div class="avoid" style="margin-top:10px"><b>확인된 교통 영향</b><br>동대문~종로~광화문, 서울광장·숭례문 일대 통제에 따른 버스 우회 예정<br><br><b>버스 우회 안내 예시</b><br>271번: 07:30~09:00<br>370번: 07:10~08:30<br>6002번: 07:20~08:40<br><small>제공받은 노선별 우회 안내문 기준. 시각은 해당 버스의 우회 예정 시간이며 자동차 통제 시간과 다를 수 있습니다. 현장 상황에 따라 변경될 수 있습니다.</small></div>`:''}<div class="pending">차량 구간별 통제 시간과 진입 가능 여부는 아직 확인 중입니다. 앱의 우회 경로 계산은 제공되지 않습니다.</div>${(e.sources||[]).map(x=>`<div><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)} ↗</a></div>`).join('')}`; if(e.id==='freedom2026'){ const button=document.getElementById('pendingMapBtn'), wrap=document.getElementById('pendingMapWrap'); button.onclick=()=>{ const show=wrap.classList.toggle('hidden')===false; button.textContent=show?'지도 닫기':'🗺 통제 영향 구간 지도 보기'; if(!show)return; if(!LEAF){document.getElementById('pendingMap').textContent='지도를 불러오지 못했습니다. 아래 서울시 공지에서 확인해 주세요.';return;} const obj=lmap('pendingMap'); const ids=['sjr','jg','j2','j3','j4','j5','hij']; const points=ids.map(id=>[NODES[id][1],NODES[id][2]]); L.polyline(points,{color:'#D2544A',weight:5,dashArray:'8 8',opacity:.9}).bindPopup('종로 일대 버스 우회 안내에 언급된 대략적인 영향 구간. 차량 통제 세부 내용 확인 필요.').addTo(obj.layer); L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(obj.layer); setTimeout(()=>{obj.map.invalidateSize();obj.map.fitBounds(L.latLngBounds([...points,CH]),{padding:[30,30]});},50); }; } return; }
+  if(e.pending){ box.innerHTML=`<b>${esc(e.name)}</b><span class="badge">${dday(e.date)}</span><div style="margin-top:4px">${fmtDate(e.date)} · ${esc(e.summary)}</div>${e.id==='freedom2026'?`<button class="btn ghost" type="button" id="pendingMapBtn" style="margin-top:10px;background:#fff">🗺 통제 영향 구간 지도 보기</button><div id="pendingMapWrap" class="hidden"><div class="mapbox"><div class="lmap" id="pendingMap"></div></div></div><div class="avoid" style="margin-top:8px"><details class="compact-detail"><summary>확인된 교통 영향 · <span class="more"></span></summary><div class="preview">동대문~종로~광화문, 서울광장·숭례문 일대 통제에 따른 버스 우회 예정</div></details><details class="compact-detail"><summary>버스 우회 안내 예시 · <span class="more"></span></summary><div class="preview">271번 07:30~09:00 · 370번 07:10~08:30 · 6002번 07:20~08:40</div><div>제공받은 버스 우회 안내문 기준이며 자동차 통제 시간과 다를 수 있습니다.</div></details></div>`:''}<div class="pending">차량 구간별 통제 시간과 진입 가능 여부는 아직 확인 중입니다. 앱의 우회 경로 계산은 제공되지 않습니다.</div>${(e.sources||[]).map(x=>`<div><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)} ↗</a></div>`).join('')}`; if(e.id==='freedom2026'){ const button=document.getElementById('pendingMapBtn'), wrap=document.getElementById('pendingMapWrap'); button.onclick=()=>{ const show=wrap.classList.toggle('hidden')===false; button.textContent=show?'지도 닫기':'🗺 통제 영향 구간 지도 보기'; if(!show)return; if(!LEAF){document.getElementById('pendingMap').textContent='지도를 불러오지 못했습니다. 아래 서울시 공지에서 확인해 주세요.';return;} drawImpactMap('pendingMap',false); }; } return; }
   const dd=dday(e.date);
   const win=e.segs.filter(s=>!s.outer); let a=Infinity,b=-Infinity; win.forEach(s=>{a=Math.min(a,m(s.from));b=Math.max(b,m(s.to));});
   box.innerHTML=`<b>${esc(e.name)}</b>${dd?`<span class="badge">${dd}</span>`:''}
@@ -618,6 +619,14 @@ function drawEvL(e,view){
   const inner=[CH],all=[CH]; e.segs.forEach(sg=>{ segLL(sg).forEach(pl=>pl.forEach(p=>{ all.push(p); if(!sg.outer) inner.push(p); })); (sg.nodes||[]).forEach(id=>inner.push([NODES[id][1],NODES[id][2]])); });
   setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(view==='ov'?all:inner),{paddingTopLeft:[70,30],paddingBottomRight:[30,30]}); restyle(m.map); setTimeout(()=>declutter(m.map),350); },30);
 }
+function drawImpactMap(id,includeStart){
+  if(!LEAF)return;
+  const obj=lmap(id), edges=['sjr-jg','jg-j2','j2-j3','j3-j4','j4-j5','j5-hij'], points=[CH];
+  edges.forEach(eid=>{ const edge=EMAP[eid]; edgeLL(edge).forEach(line=>{ L.polyline(line,{pane:'clos',kind:'clos',color:'#D2443A',weight:7,opacity:1,lineCap:'round',lineJoin:'round'}).bindPopup('종로 일대 영향 구간: 도로별 차량 통제 범위와 시간은 확인 중입니다.').addTo(obj.layer); points.push(...line); }); });
+  L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(obj.layer);
+  if(includeStart&&state.start){const pos=[state.start.lat,state.start.lng];L.marker(pos,{icon:icoSt()}).addTo(obj.layer);points.push(pos);}
+  setTimeout(()=>{obj.map.invalidateSize();obj.map.fitBounds(L.latLngBounds(points),{padding:[30,30],maxZoom:16});restyle(obj.map);},50);
+}
 function drawMainL(){
   const r=state.plan&&state.plan.list[state.sel], ev=state.ev, arr=state.arrMin;
   const m=lmap('mapL');
@@ -646,7 +655,8 @@ function drawPickL(){
 }
 
 if(LEAF) loadOSM().then(ok=>{ if(!ok) return;
-  if(state.plan) drawMain();
+  if(state.plan || (state.ev && state.ev.pending && !document.getElementById('resultCard').classList.contains('hidden'))) drawMain();
+  const pending=document.getElementById('pendingMapWrap'); if(pending&&!pending.classList.contains('hidden')&&state.ev.id==='freedom2026') drawImpactMap('pendingMap',false);
   const w=document.getElementById('evMapWrap'); if(w&&!w.classList.contains('hidden')&&window.__redrawEv) window.__redrawEv();
   if(state.picking) drawPick(); });
 
@@ -702,8 +712,11 @@ function run(scroll){
   if(ev.pending || ev.id==='none'){
     state.plan=null; state.live=null;
     document.getElementById('resultCard').classList.remove('hidden');
-    document.getElementById('resultBody').innerHTML=`<div class="result-head">${ev.pending?'통제 정보를 확인해 주세요':'등록되지 않은 통제를 확인해 주세요'}</div><div class="avoid">${ev.pending?(ev.id==='freedom2026'?'동대문·종로·광화문 일대에 통제와 버스 우회가 예정되어 있습니다. 차량의 구간별 통제 시간과 진입 가능 여부는 확인 중이라 앱의 우회 경로를 제공하지 않습니다.':'도로별 차량 통제 정보가 충분하지 않아 우회 경로를 안내할 수 없습니다.'):'대회가 목록에 없더라도 도로 통제가 있을 수 있습니다.'} 출발 전 공식 안내와 지도 앱을 확인해 주세요.</div><div class="note">아래 내비게이션에서 실제 경로를 다시 확인해 주세요. 앱의 통제 정보와 우회 경유지는 전달되지 않습니다.</div><p><a href="https://topis.seoul.go.kr/" target="_blank" rel="noopener noreferrer">서울시 교통정보 확인 ↗</a></p>`;
-    ['resultMapArea','liveBox'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    document.getElementById('resultBody').innerHTML=`<div class="result-head">${ev.pending?'통제 정보를 확인해 주세요':'등록되지 않은 통제를 확인해 주세요'}</div><div class="avoid">${ev.pending?(ev.id==='freedom2026'?'동대문·종로·광화문 일대에 통제와 버스 우회가 예정되어 있습니다. 차량 통제 시간과 정확한 경로는 확인 중입니다. 지도에는 출발지와 종로 일대 영향 구간을 표시합니다. 초록색 차량 경로는 지도 앱에서 확인해 주세요.':'도로별 차량 통제 정보가 충분하지 않아 우회 경로를 안내할 수 없습니다.'):'대회가 목록에 없더라도 도로 통제가 있을 수 있습니다.'} 출발 전 공식 안내와 지도 앱을 확인해 주세요.</div><div class="note">아래 내비게이션에서 실제 경로를 다시 확인해 주세요. 앱의 통제 정보와 우회 경유지는 전달되지 않습니다.</div><p><a href="https://topis.seoul.go.kr/" target="_blank" rel="noopener noreferrer">서울시 교통정보 확인 ↗</a></p>`;
+    document.getElementById('liveBox').classList.add('hidden');
+    const showImpact=ev.id==='freedom2026' && LEAF;
+    document.getElementById('resultMapArea').classList.toggle('hidden',!showImpact);
+    if(showImpact){document.getElementById('resultLegend').innerHTML='<span><i style="background:var(--stop)"></i>종로 일대 영향 구간 (범위·시간 확인 중)</span>';state.mapView='all'; drawImpactMap('mapL',true);}
     document.getElementById('navBtns').classList.remove('hidden');
     document.getElementById('kakaoBtn').href=`https://map.kakao.com/link/to/${encodeURIComponent('종교교회')},${N('ch')[1]},${N('ch')[2]}`;
     document.getElementById('naverBtn').href=naverUrl(null);
@@ -713,6 +726,7 @@ function run(scroll){
     return;
   }
   document.getElementById('resultMapArea').classList.remove('hidden');
+  document.getElementById('resultLegend').innerHTML='<span><i style="background:var(--route)"></i>추천 길</span><span><i style="background:var(--stop)"></i>이 시간 통제</span><span><i style="background:#E8B4AC"></i>다른 시간 통제</span>';
   const dep=depBase(); let arr=dep+40;
   for(let i=0;i<3;i++){ const p=plan(ev,state.start,arr); if(!p.list.length) break; arr=dep+Math.round(p.list[0].total); }
   renderTimeAuto();
@@ -851,7 +865,7 @@ function renderResult(fromLive){
 }
 document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ state.mapView=b.dataset.mv; document.querySelectorAll('[data-mv]').forEach(x=>x.classList.toggle('on',x===b)); drawMain(); });
 function drawMain(){
-  if(LEAF){ drawMainL(); return; }
+  if(LEAF){ if(state.ev.pending && state.ev.id==='freedom2026') drawImpactMap('mapL',true); else drawMainL(); return; }
   const svg=document.getElementById('map');
   const r=state.plan&&state.plan.list[state.sel];
   if(state.mapView==='ov') drawOverview(svg,{ev:state.ev,arr:state.arrMin,start:state.start,route:r});
@@ -1178,4 +1192,5 @@ window.__app={segLL:typeof segLL!=="undefined"?segLL:null,plan,NODES,EDGES,REGIO
 </script>
 </body>
 </html>
+
 
