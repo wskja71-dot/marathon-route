@@ -160,6 +160,7 @@ body.leaf .svgonly{display:none!important}
 .xbtn{flex:0 0 auto!important;border:0;background:var(--stop-soft);color:#9b2f27;border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .msg{margin-top:10px;font-size:14px;font-weight:700}
 .chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}
+#resultSchedule:not(:empty){margin-top:15px}#resultSchedule table{width:100%;border-collapse:collapse;font-size:14px}#resultSchedule td{padding:6px 0;border-bottom:1px solid var(--line)}#resultSchedule td:last-child{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -210,7 +211,7 @@ body.leaf .svgonly{display:none!important}
   </section>
 
   <section class="card hidden" id="resultCard">
-    <div id="resultBody"></div>
+    <div id="resultBody"></div><p class="note" id="roadStatus" aria-live="polite"></p>
     <div id="resultMapArea"><div class="maptabs"><button class="chip on" data-mv="route" type="button">교회 주변</button><button class="chip" data-mv="all" type="button">출발지부터</button></div>
     <div class="mapbox"><svg id="map" class="svgonly"></svg><div class="lmap lonly" id="mapL"></div></div>
     <div class="legend" id="resultLegend">
@@ -218,7 +219,7 @@ body.leaf .svgonly{display:none!important}
       <span><i style="background:var(--stop)"></i>이 시간 통제</span>
       <span><i style="background:#E8B4AC"></i>다른 시간 통제</span>
     </div>
-    </div><div class="alts" id="alts"></div>
+    </div><div id="resultSchedule"></div><div class="alts" id="alts"></div>
     <div id="liveBox" class="hidden" style="margin-top:16px"></div>
     <div id="navBtns">
       <div class="note" style="margin:18px 0 0;font-weight:700;color:var(--ink)">길안내 앱 고르기</div>
@@ -248,11 +249,11 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-3</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-4</span>
   </footer>
 </div>
 
-<script id="app-data" type="application/json">{"version":1,"events":[{"id":"jtbc2026","name":"2026 JTBC 서울마라톤","date":"2026-11-01","summary":"풀코스: 광화문광장 07:30 출발 → 숭례문·을지로·청계천·종로 → 신설동·군자·잠실 → 올림픽공원 / 10km: 상암 → 여의도","sources":[{"t":"서울시 교통통제 안내","u":"https://news.seoul.go.kr/culture/archives/535099"},{"t":"서울경찰청 발표 (뉴스1)","u":"https://www.news1.kr/society/incident-accident/6338189"}],"segs":[{"name":"세종대로 (광화문~숭례문) · 집결·출발지","edges":["ghm-sjr","sjr-cth","cth-srm"],"from":"04:00","to":"10:00"},{"name":"광화문 삼거리 횡단 (사직로↔율곡로)","nodes":["ghm"],"from":"07:20","to":"08:18","est":true,"note":"출발 시간대 '광화문광장 07:20~08:18 통제'에 따라 횡단이 막힐 수 있어 보수적으로 반영"},{"name":"남대문로·을지로 (숭례문~을지로~대림상가)","edges":["srm-bok","bok-ej1","cth-ej1","ej1-ej2","ej2-ej3","ej3-ej4"],"from":"07:46","to":"10:29"},{"name":"청계천로 (모전교~고산자교 왕복)","roads":["청계천로"],"poly":[[37.5693,126.979],[37.569,126.988],[37.5692,126.996],[37.57,127.006],[37.5712,127.015],[37.5728,127.03]],"from":"07:46","to":"10:29"},{"name":"종로 (종로1가~동대문)","edges":["sjr-jg","jg-j2","j2-j3","j3-j4","j4-j5","j5-hij"],"from":"07:46","to":"10:29"},{"name":"왕산로 (동대문~신설동)","edges":["hij-ssd"],"from":"07:50","to":"10:50","est":true},{"name":"천호대로 (신설동~군자역)","poly":[[37.5753,127.0248],[37.572,127.045],[37.564,127.064],[37.5572,127.0795]],"from":"07:54","to":"11:30","est":true,"outer":true},{"name":"군자역~건대입구~자양","poly":[[37.5572,127.0795],[37.548,127.0745],[37.5404,127.07],[37.5345,127.0825]],"from":"08:05","to":"12:00","est":true,"outer":true},{"name":"잠실대교~석촌호수","poly":[[37.5345,127.0825],[37.52,127.092],[37.511,127.098],[37.5085,127.1005]],"from":"08:15","to":"12:30","est":true,"outer":true},{"name":"석촌호수~학원사거리~학여울~수서IC","poly":[[37.5085,127.1005],[37.504,127.082],[37.4993,127.0637],[37.4966,127.0711],[37.488,127.1]],"from":"08:25","to":"13:20","est":true,"outer":true},{"name":"수서IC~올림픽공원 (도착)","poly":[[37.488,127.1],[37.5,127.115],[37.516,127.121]],"from":"09:10","to":"13:54","outer":true},{"name":"10km: 상암~합정~양화대교~여의도공원","poly":[[37.5683,126.8972],[37.556,126.905],[37.5496,126.9139],[37.542,126.905],[37.534,126.903],[37.527,126.915],[37.526,126.923],[37.531,126.933]],"from":"05:00","to":"11:00","outer":true}]},{"id":"mbn2026","name":"2026 MBN 서울마라톤 (하프)","date":"2026-11-15","summary":"하프: 광화문광장 07:30 출발 → 잠실종합운동장 도착","pending":true,"sources":[{"t":"대회 주최 측 구간별 통제·우회 지도","u":"https://www.mbn-seoulmarathon.com/traffic.html"},{"t":"서울시설공단 안내","u":"https://www.sisul.or.kr/open_content/childrenpark/bbs/bbsMsgDetail.do?bcd=notice&msg_seq=8940"}],"segs":[{"name":"광화문광장 출발지","edges":["ghm-sjr"],"from":"04:00","to":"09:00"},{"name":"도심 1구간 중 확인된 도로","edges":["sjr-cth","cth-srm","ej1-ej2","jg-j2","j2-j3","j3-j4","j4-j5","j5-hij"],"from":"07:20","to":"09:15"},{"name":"흥인지문~신설동","edges":["hij-ssd"],"from":"07:45","to":"09:52"}]},{"id":"freedom2026","name":"제3회 자유민주 마라톤","date":"2026-11-08","summary":"오전 7시 30분 서울광장 출발 · 종로·동대문·서울광장 일대","pending":true,"sources":[{"t":"서울시 월별 대회 안내","u":"https://news.seoul.go.kr/culture/archives/533975"},{"t":"서울시 TOPIS 교통통제 및 버스 우회 안내","u":"https://topis.seoul.go.kr/notice/openNoticeView.do?bdwrSeq=6288&blbdDivCd=02"},{"t":"서울경찰청 발표 보도 · 연합뉴스","u":"https://www.yna.co.kr/view/AKR20261106049351004"}],"segs":[{"name":"세종대로사거리~흥인지문","edges":["sjr-jg","jg-j2","j2-j3","j3-j4","j4-j5","j5-hij"],"from":"07:00","to":"08:35"}]}]}</script>
+<script id="app-data" type="application/json">{"version":1,"events":[{"id":"jtbc2026","name":"2026 JTBC 서울마라톤","date":"2026-11-01","summary":"풀코스: 광화문광장 07:30 출발 → 숭례문·을지로·청계천·종로 → 신설동·군자·잠실 → 올림픽공원 / 10km: 상암 → 여의도","sources":[{"t":"서울시 교통통제 안내","u":"https://news.seoul.go.kr/culture/archives/535099"},{"t":"서울경찰청 발표 (뉴스1)","u":"https://www.news1.kr/society/incident-accident/6338189"}],"segs":[{"name":"세종대로 (광화문~숭례문) · 집결·출발지","edges":["ghm-sjr","sjr-cth","cth-srm"],"from":"04:00","to":"10:00"},{"name":"광화문 삼거리 횡단 (사직로↔율곡로)","nodes":["ghm"],"from":"07:20","to":"08:18","est":true,"note":"출발 시간대 '광화문광장 07:20~08:18 통제'에 따라 횡단이 막힐 수 있어 보수적으로 반영"},{"name":"남대문로·을지로 (숭례문~을지로~대림상가)","edges":["srm-bok","bok-ej1","cth-ej1","ej1-ej2","ej2-ej3","ej3-ej4"],"from":"07:46","to":"10:29"},{"name":"청계천로 (모전교~고산자교 왕복)","roads":["청계천로"],"poly":[[37.5693,126.979],[37.569,126.988],[37.5692,126.996],[37.57,127.006],[37.5712,127.015],[37.5728,127.03]],"from":"07:46","to":"10:29"},{"name":"종로 (종로1가~동대문)","edges":["sjr-jg","jg-j2","j2-j3","j3-j4","j4-j5","j5-hij"],"from":"07:46","to":"10:29"},{"name":"왕산로 (동대문~신설동)","edges":["hij-ssd"],"from":"07:50","to":"10:50","est":true},{"name":"천호대로 (신설동~군자역)","poly":[[37.5753,127.0248],[37.572,127.045],[37.564,127.064],[37.5572,127.0795]],"from":"07:54","to":"11:30","est":true,"outer":true},{"name":"군자역~건대입구~자양","poly":[[37.5572,127.0795],[37.548,127.0745],[37.5404,127.07],[37.5345,127.0825]],"from":"08:05","to":"12:00","est":true,"outer":true},{"name":"잠실대교~석촌호수","poly":[[37.5345,127.0825],[37.52,127.092],[37.511,127.098],[37.5085,127.1005]],"from":"08:15","to":"12:30","est":true,"outer":true},{"name":"석촌호수~학원사거리~학여울~수서IC","poly":[[37.5085,127.1005],[37.504,127.082],[37.4993,127.0637],[37.4966,127.0711],[37.488,127.1]],"from":"08:25","to":"13:20","est":true,"outer":true},{"name":"수서IC~올림픽공원 (도착)","poly":[[37.488,127.1],[37.5,127.115],[37.516,127.121]],"from":"09:10","to":"13:54","outer":true},{"name":"10km: 상암~합정~양화대교~여의도공원","poly":[[37.5683,126.8972],[37.556,126.905],[37.5496,126.9139],[37.542,126.905],[37.534,126.903],[37.527,126.915],[37.526,126.923],[37.531,126.933]],"from":"05:00","to":"11:00","outer":true}]},{"id":"mbn2026","name":"2026 MBN 서울마라톤 (하프)","date":"2026-11-15","summary":"하프: 광화문광장 07:30 출발 → 잠실종합운동장 도착","pending":true,"sources":[{"t":"대회 주최 측 구간별 통제·우회 지도","u":"https://www.mbn-seoulmarathon.com/traffic.html"},{"t":"서울시설공단 안내","u":"https://www.sisul.or.kr/open_content/childrenpark/bbs/bbsMsgDetail.do?bcd=notice&msg_seq=8940"}],"segs":[{"name":"광화문광장 · 세종대로사거리 → 광화문삼거리","edges":["ghm-sjr"],"from":"04:00","to":"09:00"},{"name":"세종대로사거리 → 숭례문 → 을지로 → 종각역 → 흥인지문","edges":["sjr-cth","cth-srm","ej1-ej2","jg-j2","j2-j3","j3-j4","j4-j5","j5-hij"],"from":"07:20","to":"09:15","poly":[[37.570711,126.977132],[37.569641,126.977051],[37.567858,126.977085],[37.565306,126.977153],[37.56509,126.977137],[37.564237,126.976913],[37.562783,126.976355],[37.560852,126.975634],[37.560713,126.97568],[37.560613,126.975879],[37.560584,126.976067],[37.560618,126.976323],[37.560723,126.9767],[37.560963,126.977447],[37.561044,126.977777],[37.561237,126.978779],[37.561382,126.979593],[37.561548,126.980304],[37.561628,126.980578],[37.56186,126.980992],[37.562069,126.981226],[37.562265,126.981361],[37.562632,126.981575],[37.563049,126.981806],[37.563384,126.981948],[37.563822,126.98208],[37.564162,126.982159],[37.564698,126.982336],[37.565203,126.982476],[37.565601,126.982555],[37.565788,126.98261],[37.565882,126.982677],[37.565957,126.982783],[37.566,126.983039],[37.566024,126.983926],[37.566085,126.987348],[37.566115,126.987927],[37.566169,126.988442],[37.566195,126.987928],[37.566187,126.987454],[37.56618,126.987178],[37.566177,126.98678],[37.566127,126.984356],[37.566134,126.983411],[37.566291,126.983173],[37.566509,126.982854],[37.568551,126.982851],[37.569344,126.982928],[37.569861,126.983017],[37.569979,126.98308],[37.570079,126.983185],[37.570118,126.983282],[37.570157,126.983656],[37.57017,126.98727],[37.570167,126.988268],[37.57025,126.990165],[37.570393,126.991799],[37.570423,126.993032],[37.570616,126.99682],[37.570701,126.99826],[37.570845,127.000666],[37.570929,127.001956],[37.571008,127.004369],[37.571043,127.006418],[37.57108,127.007506],[37.571105,127.008444],[37.571154,127.008745],[37.571338,127.00928]]},{"name":"흥인지문 → 신설동역 → 장한평역","edges":["hij-ssd"],"from":"07:45","to":"09:52","poly":[[37.571338,127.00928],[37.57144,127.009819],[37.571596,127.01064],[37.571785,127.011483],[37.57194,127.012399],[37.572262,127.013467],[37.572262,127.013475],[37.572718,127.014819],[37.573012,127.015871],[37.573327,127.017145],[37.573606,127.018163],[37.57402,127.019414],[37.574498,127.020779],[37.574912,127.021777],[37.575238,127.022694],[37.575346,127.023012],[37.575346,127.023372],[37.575338,127.02356],[37.575141,127.024018],[37.574678,127.024982],[37.574292,127.025889],[37.57403,127.026441],[37.573895,127.026745],[37.573857,127.026978],[37.573857,127.027415],[37.57386,127.028116],[37.57384,127.02929],[37.573842,127.031096],[37.573911,127.032868],[37.573944,127.034051],[37.57399,127.036677],[37.574034,127.037758],[37.574,127.038184],[37.573905,127.038532],[37.57349,127.039834],[37.573238,127.040713],[37.573059,127.041322],[37.572789,127.041866],[37.57252,127.042467],[37.572122,127.043422],[37.571622,127.044557],[37.571239,127.045484],[37.570497,127.047382],[37.570197,127.047981],[37.569463,127.049145],[37.569101,127.049568],[37.568594,127.050238],[37.567556,127.051648],[37.565881,127.053783],[37.564993,127.054966],[37.56395,127.05642],[37.563009,127.057661],[37.562696,127.058122],[37.562446,127.0586],[37.562174,127.059255],[37.561996,127.060245],[37.56136,127.064599]]},{"name":"장한평역 → 군자역 → 건대입구역","poly":[[37.56136,127.064599],[37.560635,127.069933],[37.560509,127.070707],[37.559967,127.072209],[37.55927,127.073821],[37.558421,127.076024],[37.557332,127.078793],[37.557086,127.079247],[37.55695,127.079279],[37.556784,127.07924],[37.556237,127.078916],[37.553725,127.077551],[37.55203,127.076744],[37.550584,127.076111],[37.550262,127.075948],[37.549073,127.075266],[37.547508,127.074267],[37.547323,127.074127],[37.54623,127.073541],[37.545225,127.073054],[37.543436,127.072202],[37.541564,127.071353],[37.540221,127.070733]],"outer":true,"from":"08:03","to":"10:17"}],"schedule":[["광화문광장 · 세종대로사거리 → 광화문삼거리","04:00","09:00"],["세종대로사거리 → 숭례문 → 을지로 → 종각역 → 흥인지문","07:20","09:15"],["흥인지문 → 신설동역 → 장한평역","07:45","09:52"],["장한평역 → 군자역 → 건대입구역","08:03","10:17"],["건대입구역 → 자양사거리 → 잠실역사거리","08:15","10:47"],["잠실대교 남단 → 잠실종합운동장","07:20","11:05"],["잠실종합운동장 동문 → 종합운동장사거리","04:30","12:00"]],"outerTrack":[[37.540221,127.070733],[37.539846,127.070716],[37.53974,127.070965],[37.539354,127.072113],[37.538891,127.073665],[37.538355,127.0758],[37.537754,127.078231],[37.536987,127.081365],[37.536574,127.083085],[37.536506,127.08338],[37.536424,127.08348],[37.535911,127.083715],[37.534714,127.084196],[37.534003,127.084484],[37.533514,127.084667],[37.53287,127.08495],[37.532658,127.085127],[37.531827,127.085749],[37.530941,127.086446],[37.528844,127.088077],[37.528469,127.088336],[37.527964,127.088772],[37.527166,127.089458],[37.525189,127.090975],[37.522383,127.093127],[37.520909,127.094242],[37.520408,127.094573],[37.519802,127.095049],[37.518724,127.095808],[37.517421,127.09683],[37.516012,127.097854],[37.515251,127.098395],[37.514038,127.099309],[37.513753,127.099451],[37.513621,127.099495],[37.513462,127.09951],[37.51329,127.09944],[37.513171,127.099273],[37.513056,127.098954],[37.512566,127.097033],[37.512386,127.096281],[37.512295,127.095566],[37.512039,127.092991],[37.511846,127.090811],[37.511648,127.08884],[37.511631,127.088399],[37.511703,127.085981],[37.511775,127.084493],[37.511906,127.081436],[37.512026,127.078647],[37.512074,127.078459],[37.51257,127.078279],[37.512796,127.078211],[37.514823,127.077758]]},{"id":"freedom2026","name":"제3회 자유민주 마라톤","date":"2026-11-08","summary":"오전 7시 30분 서울광장 출발 · 종로·동대문·서울광장 일대","pending":true,"sources":[{"t":"서울시 월별 대회 안내","u":"https://news.seoul.go.kr/culture/archives/533975"},{"t":"서울시 TOPIS 교통통제 및 버스 우회 안내","u":"https://topis.seoul.go.kr/notice/openNoticeView.do?bdwrSeq=6288&blbdDivCd=02"},{"t":"서울경찰청 발표 보도 · 연합뉴스","u":"https://www.yna.co.kr/view/AKR20261106049351004"}],"segs":[{"name":"세종대로사거리~흥인지문","edges":["sjr-jg","jg-j2","j2-j3","j3-j4","j4-j5","j5-hij"],"from":"07:00","to":"08:35"}]}]}</script>
 
 <script>
 (function(){
@@ -539,7 +540,7 @@ function snapLine(approx,name,D){
   SNAP[key]=res; return res;
 }
 function edgeLL(e){ return snapLine(e.pts,baseName(e.road),130)||[e.pts]; }
-function segLL(sg){ const out=[]; (sg.edges||[]).forEach(id=>{ if(EMAP[id]) edgeLL(EMAP[id]).forEach(l=>out.push(l)); });
+function segLL(sg){ if(sg.poly && sg.edges) return [sg.poly]; const out=[]; (sg.edges||[]).forEach(id=>{ if(EMAP[id]) edgeLL(EMAP[id]).forEach(l=>out.push(l)); });
   if(sg.poly){ let done=false; (sg.roads||[]).forEach(n=>{ const r=snapLine(sg.poly,n,170); if(r){ r.forEach(l=>out.push(l)); done=true; } }); if(!done) out.push(sg.poly); }
   return out; }
 function routeLines(r){ const line=[];
@@ -577,7 +578,7 @@ function lmake(id){
   }catch(e){ base=null; }
   if(!base) L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:'osm-soft',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
   map.setView(CH,13);
-  const pane=map.createPane('clos'); pane.style.zIndex=410; pane.style.opacity='0.6';
+  const pane=map.createPane('clos'); pane.style.zIndex=410; pane.style.opacity='1';
   map.on('zoomend',()=>{ map.getContainer().classList.toggle('lowz',map.getZoom()<12.5); declutter(map); restyle(map); });
   return map;
 }
@@ -626,20 +627,110 @@ function drawImpactMap(id,includeStart){
   if(includeStart&&state.start){const pos=[state.start.lat,state.start.lng];L.marker(pos,{icon:icoSt()}).addTo(obj.layer);points.push(pos);}
   setTimeout(()=>{obj.map.invalidateSize();obj.map.fitBounds(L.latLngBounds(points),{padding:[30,30],maxZoom:16});restyle(obj.map);},50);
 }
+// OSM road coordinates and oneway flags are read from the site's static file.
+let graphPromise;
+function readRoadGraph(){
+  if(!graphPromise){
+    graphPromise=fetch('roads-seoul-center.json').then(response=>{
+      if(!response.ok)throw Error('roads');
+      return response.json();
+    }).then(({points,ways})=>{
+      const xy=points.map(([lat,lon])=>P(lat,lon));
+      const next=points.map(()=>[]);
+      for(const [oneway,...ids] of ways){
+        for(let i=1;i<ids.length;i++){
+          const a=ids[i-1], b=ids[i], length=dist(xy[a],xy[b]);
+          next[a].push([b,length]);
+          if(!oneway)next[b].push([a,length]);
+        }
+      }
+      return {points,xy,next};
+    }).catch(err=>{graphPromise=null;throw err;});
+  }
+  return graphPromise;
+}
+async function detailRoute(start,route,event){
+  const {points,xy,next}=await readRoadGraph();
+  function nearest(pos){
+    let best=-1, distance=Infinity;
+    xy.forEach((v,id)=>{const d=dist(v,pos);if(next[id].length && d<distance){best=id;distance=d;}});
+    return {id:best,distance};
+  }
+  let origin=nearest(P(start.lat,start.lng));
+  const local=origin.distance<100;
+  if(!local){
+    const entries=route.nodes.filter(id=>id!=='ch').map(id=>nearest(PN(id)));
+    origin=entries.find(point=>point.distance<=100) || origin;
+  }
+  const goal=nearest(P(...CH));
+  if(origin.distance>180 || goal.distance>100)return null;
+  const segments=event.segs.flatMap(seg=>segLL(seg)).concat(event.outerTrack?[event.outerTrack]:[]);
+  const red=segments.flatMap(line=>{
+    const pts=line.map(([lat,lon])=>P(lat,lon));
+    return pts.slice(1).map((v,i)=>[pts[i],v]);
+  });
+  function restricted(a,b){
+    return red.some(([c,d])=>{
+      if(Math.max(a[0],b[0])+12<Math.min(c[0],d[0]) || Math.max(c[0],d[0])+12<Math.min(a[0],b[0]) ||
+         Math.max(a[1],b[1])+12<Math.min(c[1],d[1]) || Math.max(c[1],d[1])+12<Math.min(a[1],b[1]))return false;
+      return cross(a,b,c,d)||Math.min(dSeg(a,c,d),dSeg(b,c,d),dSeg(c,a,b),dSeg(d,a,b))<12;
+    });
+  }
+  const cost=new Float64Array(points.length).fill(Infinity), prev=new Int32Array(points.length).fill(-1);
+  const open=new Set([origin.id]);cost[origin.id]=0;
+  while(open.size){
+    let id=-1, best=Infinity;
+    for(const k of open){const score=cost[k]+dist(xy[k],xy[goal.id]);if(score<best){id=k;best=score;}}
+    if(id===goal.id)break;
+    open.delete(id);
+    for(const [to,length] of next[id]){
+      const total=cost[id]+length;
+      if(total>=cost[to] || restricted(xy[id],xy[to]))continue;
+      cost[to]=total;prev[to]=id;open.add(to);
+    }
+  }
+  if(!Number.isFinite(cost[goal.id]))return null;
+  const line=[];
+  for(let id=goal.id;id!==-1;id=prev[id])line.push(points[id]);
+  return {line:line.reverse(),local};
+}
 function drawMainL(){
   const r=state.preview || (state.plan&&state.plan.list[state.sel]), ev=state.ev, arr=state.arrMin;
   const m=lmap('mapL');
   lClosures(m.layer,ev,sg=>ev.pending || overlaps(sg,arr-30,arr),false);
   const pts=[CH];
-  if(ev.pending && state.mapView==='all'){
-    ev.segs.forEach(segment=>segLL(segment).forEach(line=>pts.push(...line)));
+  const status=document.getElementById('roadStatus');
+  if(ev.outerTrack){
+    L.polyline(ev.outerTrack,{pane:'clos',color:'#B84139',weight:4,opacity:1})
+      .bindPopup('하프코스 동쪽 구간 · 상세 시간은 아래 시간표 참조').addTo(m.layer);
   }
-  if(r){ const lines=routeLines(r); lines.forEach(ll=>L.polyline(ll,{kind:'routeCase',color:'#fff',weight:10,opacity:.9}).addTo(m.layer)); lines.forEach(ll=>{ L.polyline(ll,{kind:'route',color:'#2E7D74',weight:6}).addTo(m.layer); ll.forEach(p=>pts.push(p)); });
-    if(state.start){ const s=[state.start.lat,state.start.lng], e0=(lines[0]&&lines[0][0])||[NODES[r.entry][1],NODES[r.entry][2]];
-      // 출발지 → 추천 길 시작점: 이 구간은 내비가 실제 길로 안내하므로 점선으로 표시
-      L.polyline([s,e0],{kind:'link',color:'#2E7D74',weight:3,dashArray:'6 8',opacity:.9}).addTo(m.layer);
-      const near=Math.hypot((state.start.lng-CH[1])*MX,(state.start.lat-CH[0])*MY)<4000;
-      if(state.mapView==='all'||near) pts.push(s); } }
+  for(const seg of ev.segs){
+    const lines=segLL(seg);
+    const line=lines.reduce((longest,next)=>next.length>longest.length?next:longest,[]);
+    if(!line.length)continue;
+    const label=seg.from+'~'+seg.to;
+    const mid=line[Math.floor(line.length/2)];
+    L.marker(mid,{icon:icoLab(label,'inner'),keyboard:false})
+      .bindPopup(esc(seg.name)+'<br>'+label).addTo(m.layer);
+    for(const ll of lines){
+      L.polyline(ll,{weight:15,opacity:0,pane:'clos'}).bindPopup(esc(seg.name)+'<br>'+label).addTo(m.layer);
+    }
+  }
+  if(state.start && state.mapView==='all')pts.push([state.start.lat,state.start.lng]);
+  else pts.push(N('sjr').slice(1),N('gbg').slice(1));
+  if(r && state.start){
+    const layer=m.layer;
+    status.textContent='도로 경로를 조회하고 있습니다.';
+    detailRoute(state.start,r,ev).catch(()=>null).then(result=>{
+      if(m.layer!==layer)return;
+      if(!result){status.textContent='통제 구간과 겹치지 않는 상세 경로를 확인하지 못했습니다. 아래 내비게이션에서 확인해 주세요.';return;}
+      const {line,local}=result;
+      L.polyline(line,{color:'#fff',weight:8,interactive:false}).addTo(layer);
+      L.polyline(line,{color:'#15764C',weight:5,opacity:1}).addTo(layer);
+      status.textContent=local?'초록선은 출발지 인근 도로에서 교회까지의 참고 경로입니다.':'출발지가 도심 상세지도 밖에 있어 초록선은 교회 진입 구간부터 표시합니다.';
+      if(state.mapView==='all')m.map.fitBounds(L.latLngBounds([...line,[state.start.lat,state.start.lng],CH]),{padding:[24,24],maxZoom:16});
+    });
+  }
   if(state.start) L.marker([state.start.lat,state.start.lng],{icon:icoSt()}).addTo(m.layer);
   L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(m.layer);
   setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(pts),{padding:[24,24],maxZoom:16}); restyle(m.map); },30);
@@ -710,6 +801,8 @@ document.getElementById('goBtn').onclick=()=>{
   run(true);
 };
 function run(scroll){
+  document.getElementById('resultSchedule').innerHTML='';
+  document.getElementById('roadStatus').textContent='';
   state.preview=null;
   const ev=state.ev;
   if(ev.pending || ev.id==='none'){
@@ -721,10 +814,16 @@ function run(scroll){
     document.querySelectorAll('[data-mv]').forEach(button=>{
       button.classList.toggle('on',button.dataset.mv===state.mapView);
     });
-    document.getElementById('resultBody').innerHTML='<div class="result-head">종교교회까지의 참고 경로</div><div class="note">'+(state.preview?'초록 점선은 출발지에서 진입 지점까지의 방향, 실선은 교회 주변 도로를 따라 계산한 참고 경로입니다.':'참고 경로를 계산하지 못했습니다.')+' 실제 통행 가능 여부는 내비게이션에서 확인해 주세요.</div>';
+    document.getElementById('resultBody').innerHTML='<div class="result-head">종교교회까지의 참고 경로</div><div class="note">'+(state.preview?'선택한 출발지와 교회 진입 지점을 기준으로 차량 경로를 조회합니다.':'참고 경로를 계산하지 못했습니다.')+' 실제 통행 가능 여부는 내비게이션에서 확인해 주세요.</div>';
     document.getElementById('liveBox').classList.add('hidden');
     document.getElementById('resultMapArea').classList.remove('hidden');
     document.getElementById('resultLegend').innerHTML='<span><i style="background:var(--route)"></i>참고 경로</span>'+(ev.segs.length?'<span><i style="background:var(--stop)"></i>통제 예정 구간 (확인된 일부)</span>':'<span>등록된 통제 구간 없음</span>');
+    const rows=ev.schedule || ev.segs.map(seg=>[seg.name,seg.from,seg.to]);
+    if(rows.length){
+      const rowHtml=rows.map(([name,from,to])=>
+        '<tr><td>'+esc(name)+'</td><td>'+esc(from)+'~'+esc(to)+'</td></tr>').join('');
+      document.getElementById('resultSchedule').innerHTML='<b>'+ (ev.id==='mbn2026'?'하프코스 구간별 통제 시간':'구간별 통제 시간') +'</b><table>'+rowHtml+'</table>';
+    }
     drawMain();
     document.getElementById('navBtns').classList.remove('hidden');
     document.getElementById('kakaoBtn').href=`https://map.kakao.com/link/to/${encodeURIComponent('종교교회')},${N('ch')[1]},${N('ch')[2]}`;
@@ -1195,12 +1294,13 @@ document.getElementById('shareBtn').onclick=async()=>{
 })();
 
 /* ---------- 시작 ---------- */
-fillEvents(); loadPref(); renderTimeAuto(); if(state.start) run(false);
+fillEvents(); loadPref(); renderTimeAuto();
 if(!state.start){ /* 기본값 없음 */ }
 window.__app={segLL:typeof segLL!=="undefined"?segLL:null,plan,NODES,EDGES,REGIONS,DATA,state,run,kakaoUrl,viaPoints,closuresFor,m};
 })();
 </script>
 </body>
 </html>
+
 
 
