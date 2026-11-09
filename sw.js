@@ -2,10 +2,11 @@
    - 페이지(index.html)는 항상 최신 것을 먼저 받아 오고, 인터넷이 안 될 때만 저장본을 씁니다.
    - 지도 라이브러리·아이콘·로고처럼 잘 안 바뀌는 파일은 저장본을 씁니다.
    - 배경 지도 타일, 도로 데이터, 길안내 앱 연결은 건드리지 않습니다. */
-const CACHE = 'jg-route-v1';
+const CACHE = 'jg-route-v2';
 const CORE = [
   './',
   './index.html',
+  './events.json',
   './manifest.webmanifest',
   './logo.png',
   './icons/icon-192.png',
@@ -35,6 +36,20 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return; // 외부(지도·도로 데이터)는 그대로
 
+  if(url.pathname === new URL('./events.json', self.registration.scope).pathname){
+    e.respondWith((async()=>{
+      const cache=await caches.open(CACHE);
+      try{
+        const res=await fetch(req,{cache:'no-cache'});
+        if(!res.ok || !Array.isArray((await res.clone().json()).events)) throw Error('events');
+        await cache.put(req,res.clone());
+        return res;
+      }catch{
+        return (await cache.match(req)) || Response.error();
+      }
+    })());
+    return;
+  }
   const isPage = req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html');
   if (isPage) {
     // 최신 우선
