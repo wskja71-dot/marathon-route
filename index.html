@@ -207,6 +207,7 @@ body.leaf .svgonly{display:none!important}
       <div class="row" style="margin-top:10px"><input type="time" id="depTime" step="300"><button class="xbtn" type="button" id="depNow" style="background:var(--sand);color:var(--brown)">지금으로</button></div>
     </details>
 
+    <div class="note">기기에서 전체 경로를 찾지 못한 경우, ‘길 찾기’를 누르면 출발 좌표와 교회 위치를 외부 길찾기 서비스(BRouter)에 보내 차량 경로를 조회합니다.</div>
     <button class="btn" id="goBtn" type="button">길 찾기</button>
   </section>
 
@@ -249,7 +250,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-5</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-6</span>
   </footer>
 </div>
 
@@ -622,8 +623,9 @@ function lmake(id){
 const MAPS={};
 /* 줌에 따라 선 굵기 조절: 멀리 보면 얇게, 가까이 보면 굵게 */
 function wz(z,base){ return Math.max(2,Math.min(base, base*(z-10.5)/5)); }
+function closureWidth(zoom){return Math.max(3,wz(zoom,7));}
 function restyle(map){ const z=map.getZoom(); map.eachLayer(l=>{ const k=l.options&&l.options.kind; if(!k||!l.setStyle) return;
-  if(k==='clos') l.setStyle({weight:wz(z,8)}); else if(k==='closOff') l.setStyle({weight:wz(z,5)});
+  if(k==='clos'||k==='closOff') l.setStyle({weight:closureWidth(z)});
   else if(k==='route') l.setStyle({weight:wz(z,6)}); else if(k==='link') l.setStyle({weight:Math.max(2,wz(z,4))}); else if(k==='routeCase') l.setStyle({weight:wz(z,6)+4}); }); }
 function declutter(map){
   const els=[...map.getContainer().querySelectorAll('.lab span')]; const kept=[];
@@ -638,7 +640,7 @@ const icoLab=(t,cls)=>L.divIcon({className:'lab '+(cls||''),html:'<span>'+esc(t)
 function lClosures(layer,ev,isOn,withLabels){
   ev.segs.forEach((sg,i)=>{
     const on=isOn(sg), pls=segLL(sg);
-    pls.forEach(pl=>L.polyline(pl,on?{pane:'clos',kind:'clos',color:'#D2443A',weight:7,opacity:1,lineCap:'round',lineJoin:'round'}:{pane:'clos',kind:'closOff',color:'#E59A90',weight:5,opacity:1,dashArray:'6 8'}).addTo(layer));
+    pls.forEach(pl=>L.polyline(pl,on?{pane:'clos',kind:'clos',color:'#D2443A',weight:closureWidth(layer._map.getZoom()),opacity:1,lineCap:'round',lineJoin:'round'}:{pane:'clos',kind:'closOff',color:'#E59A90',weight:closureWidth(layer._map.getZoom()),opacity:1,dashArray:'6 8'}).addTo(layer));
     (sg.nodes||[]).forEach(id=>L.circleMarker([NODES[id][1],NODES[id][2]],{pane:'clos',radius:7,color:'#fff',weight:2,fillColor:on?'#D2544A':'#E59A90',fillOpacity:1}).addTo(layer));
     if(withLabels){
       let pts=[]; pls.forEach(pl=>pts=pts.concat(pl)); (sg.nodes||[]).forEach(id=>pts.push([NODES[id][1],NODES[id][2]]));
@@ -732,14 +734,153 @@ async function detailRoute(start,route,event){
   for(let id=goal.id;id!==-1;id=prev[id])line.push(points[id]);
   return {line:line.reverse(),local};
 }
+// Regional files contain only public approach coordinates. Validate candidates
+// against the selected event on each request, including after a data update.
+function decodeApproach(encoded) {
+  const line = [];
+  let offset = 0, lat = 0, lng = 0;
+  function delta() {
+    let value = 0, shift = 0, digit;
+    do {
+      if (offset >= encoded.length || shift > 30) throw Error('route encoding');
+      digit = encoded.charCodeAt(offset++) - 63;
+      value |= (digit & 31) << shift;
+      shift += 5;
+    } while (digit >= 32);
+    return value & 1 ? ~(value >> 1) : value >> 1;
+  }
+  while (offset < encoded.length) {
+    lat += delta(); lng += delta();
+    line.push([lat / 1e5, lng / 1e5]);
+  }
+  return line;
+}
+
+function courseLines(event) {
+  return event.segs.flatMap(seg => segLL(seg)).concat(event.outerTrack ? [event.outerTrack] : []);
+}
+
+function isClear(line, closures, event) {
+  const points = line.map(p => P(...p));
+  const blockedNodes = event.segs.flatMap(s => s.nodes || []).filter(id => N(id)).map(PN);
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i-1], b = points[i];
+    if (blockedNodes.some(p => dSeg(p, a, b) < 12)) return false;
+    for (const [c,d] of closures) {
+      if (Math.min(a[0],b[0]) > Math.max(c[0],d[0])+12 || Math.min(c[0],d[0]) > Math.max(a[0],b[0])+12 ||
+          Math.min(a[1],b[1]) > Math.max(c[1],d[1])+12 || Math.min(c[1],d[1]) > Math.max(a[1],b[1])+12) continue;
+      if (cross(a,b,c,d) || Math.min(dSeg(a,c,d),dSeg(b,c,d),dSeg(c,a,b),dSeg(d,a,b)) < 12) return false;
+    }
+  }
+  return true;
+}
+
+const approachRequests = new Map();
+function regionalApproaches(row) {
+  const name = row.slice(1).map(v => Math.round(v*1e5)).join('_');
+  if (!approachRequests.has(name)) {
+    approachRequests.set(name, fetch('./approaches/'+name+'.json').then(async res => {
+      if (!res.ok) throw Error('approach');
+      return (await res.json()).map(decodeApproach);
+    }).catch(() => { approachRequests.delete(name); return []; }));
+  }
+  return approachRequests.get(name);
+}
+
+let externalOrigin = null;
+const routeCache = new Map();
+async function queryDrivingRoute(start, lines, via) {
+  const coord = p => p[1].toFixed(5)+','+p[0].toFixed(5);
+  const params = new URLSearchParams({
+    lonlats: [[start.lat,start.lng], ...via, CH].map(coord).join('|'),
+    profile: 'car-fast', alternativeidx: '0', format: 'geojson'
+  });
+  // The local check below always uses the complete closure geometry.
+  // Keep public server requests short even for densely sampled race tracks.
+  const barriers = lines.filter(l => l.length > 1).map(l => {
+    const sparse = [l[0]];
+    for (let i=1;i<l.length-1;i++) {
+      if (dist(P(...sparse[sparse.length-1]),P(...l[i]))>65) sparse.push(l[i]);
+    }
+    sparse.push(l[l.length-1]);
+    return sparse.map(coord).join(',');
+  }).join('|');
+  if (barriers && barriers.length < 5300) params.set('polylines',barriers);
+  const url = 'https://brouter.de/brouter?'+params;
+  if (routeCache.has(url)) return routeCache.get(url);
+  const request = (async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(url,{signal:controller.signal,credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'});
+      if (!response.ok) return null;
+      const geometry = (await response.json()).features?.[0]?.geometry;
+      if (geometry?.type !== 'LineString') return null;
+      const line = geometry.coordinates.map(([lng,lat]) => [lat,lng]);
+      if (line.length < 2 || line.some(p => !p.every(Number.isFinite))) return null;
+      if (dist(P(start.lat,start.lng),P(...line[0]))>150 || dist(P(...CH),P(...line[line.length-1]))>100) return null;
+      return line;
+    } finally { clearTimeout(timer); }
+  })().catch(() => null);
+  if (routeCache.size >= 8) routeCache.delete(routeCache.keys().next().value);
+  routeCache.set(url,request);
+  const line = await request;
+  if (!line) routeCache.delete(url);
+  return line;
+}
+
+async function fullRoute(start, route, event) {
+  const lines = courseLines(event);
+  const closures = lines.flatMap(line => {
+    const xy = line.map(p => P(...p));
+    return xy.slice(1).map((p,i) => [xy[i],p]);
+  });
+  const clear = line => isClear(line,closures,event);
+  const origin = P(start.lat,start.lng);
+  const nearestRegion = REGIONS.flatMap(group=>group[1])
+    .map(row => ({row,distance:dist(origin,P(row[1],row[2]))}))
+    .sort((a,b) => a.distance-b.distance)[0];
+  if (nearestRegion.distance < 5000) {
+    const choices = await regionalApproaches(nearestRegion.row);
+    for (const line of choices) {
+      if (nearestRegion.distance < 25 && clear(line)) return {line,local:true};
+      // Reuse a public approach only when the pin lies very close to its road.
+      let best = null, shortest = 15;
+      for (let i=1; i<line.length; i++) {
+        const a=P(...line[i-1]), b=P(...line[i]);
+        const dx=b[0]-a[0], dy=b[1]-a[1];
+        const t=Math.max(0,Math.min(1,((origin[0]-a[0])*dx+(origin[1]-a[1])*dy)/(dx*dx+dy*dy||1)));
+        const point=[a[0]+t*dx,a[1]+t*dy], gap=dist(origin,point);
+        if (gap < shortest) { shortest=gap; best={i,point}; }
+      }
+      if (best) {
+        const suffix=[UNP(...best.point),...line.slice(best.i)];
+        if (clear(suffix)) return {line:suffix,local:true};
+      }
+    }
+  }
+  const local = await detailRoute(start,route,event).catch(()=>null);
+  if (local?.local && clear(local.line)) return local;
+  if (start === externalOrigin) {
+    const ways = [event.pending || !route.entry ? [] : [N(route.entry).slice(1)], [N('dnm').slice(1)]];
+    for (const via of ways) {
+      if (state.start !== start || state.ev !== event) return null;
+      const line = await queryDrivingRoute(start,lines,via);
+      if (line && clear(line)) return {line,local:true};
+    }
+  }
+  return local && clear(local.line) ? local : null;
+}
+
 function drawMainL(){
   const r=state.preview || (state.plan&&state.plan.list[state.sel]), ev=state.ev, arr=state.arrMin;
   const m=lmap('mapL');
   lClosures(m.layer,ev,sg=>ev.pending || overlaps(sg,arr-30,arr),false);
   const pts=[CH];
   const status=document.getElementById('roadStatus');
+  let fullBounds=null;
   if(ev.outerTrack){
-    L.polyline(ev.outerTrack,{pane:'clos',color:'#B84139',weight:4,opacity:1})
+    L.polyline(ev.outerTrack,{pane:'clos',kind:'clos',color:'#D2443A',weight:closureWidth(m.map.getZoom()),opacity:1,lineCap:'round',lineJoin:'round'})
       .bindPopup('하프코스 동쪽 구간 · 상세 시간은 아래 시간표 참조').addTo(m.layer);
   }
   for(const seg of ev.segs){
@@ -759,19 +900,29 @@ function drawMainL(){
   if(r && state.start){
     const layer=m.layer;
     status.textContent='도로 경로를 조회하고 있습니다.';
-    detailRoute(state.start,r,ev).catch(()=>null).then(result=>{
+    fullRoute(state.start,r,ev).catch(()=>null).then(result=>{
       if(m.layer!==layer)return;
-      if(!result){status.textContent='통제 구간과 겹치지 않는 상세 경로를 확인하지 못했습니다. 아래 내비게이션에서 확인해 주세요.';return;}
+      if(!result){status.textContent=externalOrigin===state.start?'통제를 피하는 전체 경로를 확인하지 못했습니다. 아래 내비게이션에서 확인해 주세요.':'위의 ‘길 찾기’를 눌러 출발지부터의 도로 경로를 조회해 주세요.';return;}
       const {line,local}=result;
+      const origin=[state.start.lat,state.start.lng];
+      // Small off-road pin-to-street gaps are access links, never drivable roads.
+      function accessLink(a,b){
+        if(dist(P(...a),P(...b))>2)L.polyline([a,b],{color:'#15764C',weight:3,dashArray:'2 4',interactive:false}).addTo(layer);
+      }
+      if(local) accessLink(origin,line[0]);
+      else L.circleMarker(line[0],{radius:5,color:'#15764C',fillColor:'#fff',fillOpacity:1}).bindTooltip('교회 진입 경로 시작').addTo(layer);
+      accessLink(line[line.length-1],CH);
       L.polyline(line,{color:'#fff',weight:8,interactive:false}).addTo(layer);
       L.polyline(line,{color:'#15764C',weight:5,opacity:1}).addTo(layer);
-      status.textContent=local?'초록선은 출발지 인근 도로에서 교회까지의 참고 경로입니다.':'출발지가 도심 상세지도 밖에 있어 초록선은 교회 진입 구간부터 표시합니다.';
-      if(state.mapView==='all')m.map.fitBounds(L.latLngBounds([...line,[state.start.lat,state.start.lng],CH]),{padding:[24,24],maxZoom:16});
+      status.textContent=local ? '초록 실선은 도로를 따른 참고 경로입니다. 핀이 도로에서 떨어진 곳은 짧은 점선으로 연결합니다.'
+        : externalOrigin===state.start ? '전체 우회 경로를 확인하지 못해 교회 진입 구간만 표시합니다.' : '교회 진입 구간을 표시했습니다. 위의 ‘길 찾기’를 누르면 출발지부터 조회합니다.';
+      if(state.mapView==='all'){fullBounds=L.latLngBounds([...line,[state.start.lat,state.start.lng],CH]);m.map.fitBounds(fullBounds,{padding:[24,24],maxZoom:16});}
     });
   }
   if(state.start) L.marker([state.start.lat,state.start.lng],{icon:icoSt()}).addTo(m.layer);
   L.marker(CH,{icon:icoCh(),zIndexOffset:500}).addTo(m.layer);
-  setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds(L.latLngBounds(pts),{padding:[24,24],maxZoom:16}); restyle(m.map); },30);
+  const activeLayer=m.layer;
+  setTimeout(()=>{ if(m.layer!==activeLayer)return; m.map.invalidateSize(); m.map.fitBounds(fullBounds||L.latLngBounds(pts),{padding:[24,24],maxZoom:16}); restyle(m.map); },30);
 }
 function drawPickL(){
   const first=!MAPS.pickL; const m=lmap('pickL');
@@ -836,6 +987,7 @@ setInterval(()=>{ if(state.dep==null) renderTimeAuto(); },30000);
 /* ---------- 실행 ---------- */
 document.getElementById('goBtn').onclick=()=>{
   if(!state.start){ gmsg('현재 위치를 확인하거나 지도에서 출발지를 선택해 주세요.',true); geoBtn.focus(); return; }
+  externalOrigin=state.start;
   run(true);
 };
 function run(scroll){
