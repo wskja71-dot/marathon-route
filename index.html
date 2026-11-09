@@ -243,7 +243,7 @@ body.leaf .svgonly{display:none!important}
 
 
   <footer>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.10-1</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.10-2</span>
   </footer>
 </div>
 
@@ -357,7 +357,7 @@ try {
   document.getElementById('evInfo').textContent='대회 정보를 불러오지 못했습니다. 연결을 확인하고 새로고침해 주세요.';
   return;
 }
-const NONE={id:'none',name:'등록된 대회 외 / 직접 확인',date:'',summary:'등록되지 않은 통제가 있을 수 있습니다.',segs:[],sources:[]};
+const NONE={id:'none',name:'',date:'',summary:'등록되지 않은 통제가 있을 수 있습니다.',segs:[],sources:[]};
 
 /* ---------- 통제 판단 ---------- */
 function overlaps(seg,a,b){ return m(seg.from)<b && m(seg.to)>a; }
@@ -451,7 +451,7 @@ function plan(ev,start,arr,avoidScheduled=false){
 
 /* ---------- 상태 ---------- */
 const state={ev:null,start:null,arr:'09:30',plan:null,sel:0,mapView:'route',pickView:'ov',picking:false};
-const allEvents=()=>{ const t=kstNow().date; return [...DATA.events.filter(e=>!e.date||e.date>=t).sort((a,b)=>a.date.localeCompare(b.date)),NONE]; };
+const allEvents=()=>{ const t=kstNow().date; return DATA.events.filter(e=>!e.date||e.date>=t).sort((a,b)=>(a.date||'').localeCompare(b.date||'')); };
 function kstNow(){
   const f=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
   const g=t=>f.find(x=>x.type===t).value;
@@ -469,20 +469,19 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 /* ---------- UI: 대회 ---------- */
 const evSel=document.getElementById('evSel');
 function fillEvents(){
-  const today=kstNow().date;
   const evs=allEvents();
+  evSel.hidden=evs.length===0;
+  evSel.disabled=evs.length===0;
   evSel.innerHTML=evs.map(e=>`<option value="${e.id}">${esc(e.name)}${e.date?' · '+fmtDate(e.date):''}</option>`).join('');
-  if(!state.ev || !evs.find(e=>e.id===state.ev.id)){
-    state.ev=evs.find(e=>e.date && e.date>=today) || NONE;
-  } else state.ev=evs.find(e=>e.id===state.ev.id);
+  state.ev=evs.find(e=>e.id===state.ev?.id) || evs[0] || NONE;
   evSel.value=state.ev.id;
   renderEvInfo(); renderTimeline();
 }
-evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value); renderEvInfo(); renderTimeline(); if(state.start && !document.getElementById('resultCard').classList.contains('hidden')) run(false); };
+evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value) || NONE; renderEvInfo(); renderTimeline(); if(state.start && !document.getElementById('resultCard').classList.contains('hidden')) run(false); };
 function renderEvInfo(){
   for(const id of ['pendingMap','evL']){ if(MAPS[id]){ MAPS[id].map.remove(); delete MAPS[id]; } }
   const e=state.ev, box=document.getElementById('evInfo');
-  if(e.id==='none'){ box.innerHTML='<b>등록된 대회 외</b><div>이 목록은 전체 교통통제 목록이 아닙니다. 출발 전 서울시 교통정보를 확인해 주세요.</div>'; return; }
+  if(e.id==='none'){ box.textContent='현재 등록된 예정 대회가 없습니다.'; return; }
   if(e.pending || e.mapImage){
     const links=(e.sources||[]).filter(x=>/^https?:\/\//.test(x.u)).map(x=>
       `<div><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)} ↗</a></div>`).join('');
