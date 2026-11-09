@@ -119,10 +119,7 @@ footer a{color:var(--brown)}
 .live-opt b{display:block;font-size:13.5px;color:var(--muted);font-weight:700}
 .live-opt span{display:block;font-size:22px;font-weight:800;margin-top:2px;letter-spacing:-0.02em}
 .live-opt small{display:block;font-size:12.5px;color:var(--muted)}
-.timeauto{margin-top:18px;font-size:15px;background:var(--sand);border-radius:14px;padding:11px 14px;color:var(--brown)}
-.timeauto b{color:var(--ink)}
-.deptime{margin-top:8px;font-size:14px;color:var(--muted)}
-.deptime summary{cursor:pointer;padding:4px 2px}
+#navGuide{margin:14px 0 0;color:#b13229;font-size:18px;line-height:1.55;font-weight:700;word-break:keep-all}
 .seglist{margin-top:12px;background:rgba(255,255,255,.6);border-radius:12px;padding:10px 12px}
 .seg-h{font-size:12.5px;font-weight:800;color:var(--brown);margin-bottom:4px}
 .seg-i{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:4px 0;border-top:1px dashed rgba(122,78,45,.18)}
@@ -202,13 +199,6 @@ body.leaf .svgonly{display:none!important}
       <div class="mapbox"><svg id="pickMap" class="svgonly"></svg><div class="lmap lonly" id="pickL"></div></div>
     </div>
 
-    <div class="timeauto" id="timeAuto"></div>
-    <details class="deptime" id="depBox">
-      <summary>다른 시각에 출발하기</summary>
-      <div class="row" style="margin-top:10px"><input type="time" id="depTime" step="300"><button class="xbtn" type="button" id="depNow" style="background:var(--sand);color:var(--brown)">지금으로</button></div>
-    </details>
-
-    <label class="note" style="display:block"><input type="checkbox" id="allowExternal"> 기기에서 길을 찾기 어려울 때, 출발 좌표와 교회 위치를 BRouter에 보내 경로 조회</label>
     <button class="btn" id="goBtn" type="button">길 찾기</button>
   </section>
 
@@ -229,7 +219,7 @@ body.leaf .svgonly{display:none!important}
       <a class="btn nav kakao" id="kakaoBtn" href="#" target="_blank" rel="noopener">카카오맵으로 길안내</a>
       <a class="btn nav naver" id="naverBtn" href="#">네이버 지도 내비로 길안내</a>
       <a class="btn nav tmap" id="tmapBtn" href="#">티맵으로 길안내</a>
-      <p class="note" id="navGuide" style="margin:12px 0 0;color:#b13229;font-weight:700">네비를 선택하면 경유지를 설정해 빠른 우회길을 자동으로 설정합니다.<br>단, 티맵은 경유지가 두 개밖에 설정되지 않습니다.</p>
+      <p class="note" id="navGuide">네비를 선택하면 경유지를 설정해 빠른 우회길을 자동으로 설정합니다.<br>단, 티맵은 경유지가 두 개밖에 설정되지 않습니다.</p>
       <div class="note" id="kakaoNote"></div>
       <div class="msg hidden" id="navMsg"></div>
     </div>
@@ -254,7 +244,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-8</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-9</span>
   </footer>
 </div>
 
@@ -489,7 +479,7 @@ function fillEvents(){
   evSel.value=state.ev.id;
   renderEvInfo(); renderTimeline();
 }
-evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value); renderEvInfo(); renderTimeline(); renderTimeAuto(); if(state.start && !document.getElementById('resultCard').classList.contains('hidden')) run(false); };
+evSel.onchange=()=>{ state.ev=allEvents().find(e=>e.id===evSel.value); renderEvInfo(); renderTimeline(); if(state.start && !document.getElementById('resultCard').classList.contains('hidden')) run(false); };
 function renderEvInfo(){
   for(const id of ['pendingMap','evL']){ if(MAPS[id]){ MAPS[id].map.remove(); delete MAPS[id]; } }
   const e=state.ev, box=document.getElementById('evInfo');
@@ -955,7 +945,18 @@ function drawMainL(){
     status.textContent='도로 경로를 조회하고 있습니다.';
     fullRoute(state.start,r,ev).catch(()=>null).then(line=>{
       if(m.layer!==layer)return;
-      if(!line){status.textContent=externalOrigin===state.start?'출발지에서 교회까지 이어지는 우회 경로를 확인하지 못했습니다. 도로 위에 출발지를 다시 찍거나 아래 내비게이션을 이용해 주세요.':'기기에서 출발지까지 연결된 경로를 찾지 못했습니다. 위에서 BRouter 경로 조회를 선택하거나 아래 내비게이션을 이용해 주세요.';return;}
+      if(!line){
+        status.textContent='출발지에서 교회까지 이어지는 우회 경로를 찾지 못했습니다. 도로 위에 출발지를 다시 찍거나 아래 내비게이션을 이용해 주세요.';
+        if(externalOrigin!==state.start){
+          const lookup=document.createElement('button');
+          lookup.type='button';
+          lookup.className='btn ghost';
+          lookup.textContent='출발 좌표와 교회 위치를 BRouter에 보내 조회';
+          lookup.onclick=()=>{ externalOrigin=state.start; drawMain(); };
+          status.append(lookup);
+        }
+        return;
+      }
       const origin=[state.start.lat,state.start.lng];
       // Small off-road pin-to-street gaps are access links, never drivable roads.
       function accessLink(a,b){
@@ -1019,31 +1020,15 @@ pickMap.addEventListener('click',evt=>{
   drawPick(); startRouting(false);
 });
 
-/* ---------- UI: 시간 (기본: 지금 출발) ---------- */
-let nowMode=true; state.dep=null;
-const depTime=document.getElementById('depTime'), timeAuto=document.getElementById('timeAuto');
-function depBase(){ return state.dep==null?kstNow().min:state.dep; }
-function renderTimeAuto(){
-  const ev=state.ev, today=kstNow().date, t=hm(depBase());
-  const other=ev.id!=='none'&&ev.date&&ev.date!==today;
-  timeAuto.innerHTML=state.dep==null
-    ? `🕒 지금 <b>${t}</b>에 출발한다고 보고 안내해요${other?`<br><small>오늘은 대회 날이 아니라서 ${fmtDate(ev.date)} 같은 시각 기준으로 보여 드려요</small>`:''}`
-    : `🕒 <b>${t}</b>에 출발한다고 보고 안내해요${other?` <small>(${fmtDate(ev.date)})</small>`:''}`;
-}
-depTime.onchange=()=>{ if(!depTime.value) return; state.dep=m(depTime.value); nowMode=false; renderTimeAuto(); if(state.start) run(false); };
-document.getElementById('depNow').onclick=()=>{ state.dep=null; nowMode=true; depTime.value=''; renderTimeAuto(); if(state.start) run(false); };
-setInterval(()=>{ if(state.dep==null) renderTimeAuto(); },30000);
+function depBase(){ return kstNow().min; }
 
 /* ---------- 실행 ---------- */
 document.getElementById('goBtn').onclick=()=>{
   if(!state.start){ gmsg('현재 위치를 확인하거나 지도에서 출발지를 선택해 주세요.',true); geoBtn.focus(); return; }
   startRouting(true);
 };
-document.getElementById('allowExternal').onchange=()=>{
-  if(state.start) startRouting(false);
-};
 function startRouting(scroll){
-  externalOrigin=document.getElementById('allowExternal').checked ? state.start : null;
+  externalOrigin=null;
   state.mapView='all';
   document.querySelectorAll('[data-mv]').forEach(button=>{
     button.classList.toggle('on',button.dataset.mv==='all');
@@ -1085,7 +1070,7 @@ function run(scroll){
   document.getElementById('resultLegend').innerHTML='<span><i style="background:var(--route)"></i>추천 길</span><span><i style="background:var(--stop)"></i>이 시간 통제</span><span><i style="background:#E8B4AC"></i>다른 시간 통제</span>';
   const dep=depBase(); let arr=dep+40;
   for(let i=0;i<3;i++){ const p=plan(ev,state.start,arr); if(!p.list.length) break; arr=dep+Math.round(p.list[0].total); }
-  renderTimeAuto();
+
   state.arrMin=arr;
   state.plan=plan(ev,state.start,arr);
   state.base=plan(NONE,state.start,arr);
@@ -1201,10 +1186,10 @@ function renderResult(fromLive){
   const extra=base?Math.round(r.total-base.total):0;
   const rel=relevantClosures(ev,arr);
   const dep=arr-Math.round(r.total);
-  const notToday=nowMode&&ev.id!=='none'&&ev.date!==kstNow().date;
-  const startLine=nowMode?`지금 출발하면 <b>${hm(arr)}</b>쯤 도착`:`<b>${hm(state.dep)}</b> 출발하면 ${hm(arr)}쯤 도착`;
+  const notToday=ev.id!=='none'&&ev.date!==kstNow().date;
+  const startLine=`지금 출발하면 <b>${hm(arr)}</b>쯤 도착`;
   body.innerHTML=`
-    <div class="eyebrow" style="background:var(--route-soft);color:#1f5852">${esc(state.start.name)} 출발 · ${nowMode?'지금':hm(state.dep)}</div>
+    <div class="eyebrow" style="background:var(--route-soft);color:#1f5852">${esc(state.start.name)} 출발 · 지금</div>
     <div class="result-head" style="margin-top:10px"><em>${esc(gate)}</em> 쪽으로 들어와서<br>${esc(finalApproach(r))} 오세요</div>
     <div class="meta">
       <span class="pill">약 ${Math.round(r.total)}분</span>
@@ -1549,7 +1534,7 @@ document.getElementById('shareBtn').onclick=async()=>{
 })();
 
 /* ---------- 시작 ---------- */
-fillEvents(); loadPref(); renderTimeAuto();
+fillEvents(); loadPref();
 if(!state.start){ /* 기본값 없음 */ }
 window.__app={segLL:typeof segLL!=="undefined"?segLL:null,plan,NODES,EDGES,REGIONS,DATA,state,run,kakaoUrl,viaPoints,closuresFor,m};
 })();
