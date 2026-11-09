@@ -189,7 +189,8 @@ body.leaf .svgonly{display:none!important}
 
   <section class="card">
     <h2><span class="step">2</span>어디서 출발하세요?</h2>
-    <button class="btn" id="geoBtn" type="button" style="margin:0 0 12px;background:var(--apricot)">📍 지금 내 위치에서 출발</button>
+    <p class="note" id="originNotice">출발지를 고르면 기기 안에서 교회까지의 경로를 찾습니다.</p>
+    <button aria-describedby="originNotice" class="btn" id="geoBtn" type="button" style="margin:0 0 12px;background:var(--apricot)">📍 지금 내 위치에서 출발</button>
     <div class="msg hidden" id="geoMsg"></div>
     <select id="regionSel" hidden aria-hidden="true" tabindex="-1"></select>
     <div class="row" style="margin-top:10px">
@@ -207,7 +208,7 @@ body.leaf .svgonly{display:none!important}
       <div class="row" style="margin-top:10px"><input type="time" id="depTime" step="300"><button class="xbtn" type="button" id="depNow" style="background:var(--sand);color:var(--brown)">지금으로</button></div>
     </details>
 
-    <div class="note">기기에서 전체 경로를 찾지 못한 경우, ‘길 찾기’를 누르면 출발 좌표와 교회 위치를 외부 길찾기 서비스(BRouter)에 보내 차량 경로를 조회합니다.</div>
+    <label class="note" style="display:block"><input type="checkbox" id="allowExternal"> 기기에서 길을 찾기 어려울 때, 출발 좌표와 교회 위치를 BRouter에 보내 경로 조회</label>
     <button class="btn" id="goBtn" type="button">길 찾기</button>
   </section>
 
@@ -250,7 +251,7 @@ body.leaf .svgonly{display:none!important}
 
   <footer>
     앱의 예상 시간은 거리로 어림한 값이며 실시간 교통을 반영하지 않습니다. 지도 앱에서 현재 교통 상황과 통제 반영 여부를 확인해 주세요. 통제 시간은 서울시·서울경찰청 발표를 따르며, '추정' 표시는 세부 시간이 발표되지 않아 앞뒤 구간으로 어림한 것입니다.<br>
-    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-6</span>
+    종교교회 · 서울 종로구 사직로8길 48 (도렴동)<br><span style="opacity:.7">버전 2026.11.09-7</span>
   </footer>
 </div>
 
@@ -668,15 +669,40 @@ function drawImpactMap(id,includeStart){
   setTimeout(()=>{obj.map.invalidateSize();obj.map.fitBounds(L.latLngBounds(points),{padding:[30,30],maxZoom:16});restyle(obj.map);},50);
 }
 // OSM road coordinates and oneway flags are read from the site's static file.
-let graphPromise;
-function readRoadGraph(){
-  if(!graphPromise){
-    graphPromise=fetch('roads-seoul-center.json').then(response=>{
+const graphs = new Map();
+function decodeDistrict(text) {
+  const data = atob(text.trim());
+  if (data.slice(0,4) !== 'JGR1') throw Error('road data');
+  let offset=4;
+  function integer(){
+    let value=0;
+    for(let shift=0; shift<32 && offset<data.length; shift+=7){
+      const byte=data.charCodeAt(offset++);
+      value+=(byte&127)*2**shift;
+      if(byte<128)return value;
+    }
+    throw Error('road encoding');
+  }
+  function delta(){const n=integer();return n%2 ? -(n+1)/2 : n/2;}
+  const count=integer(), wayCount=integer(),points=[],ways=[];
+  let lat=0,lng=0;
+  for(let i=0;i<count;i++){
+    lat+=delta();lng+=delta();points.push([lat/1e5,lng/1e5]);
+  }
+  for(let i=0;i<wayCount;i++){
+    const spec=integer(),way=[spec%2];let id=0;
+    for(let j=0;j<Math.floor(spec/2);j++){id+=delta();way.push(id);}
+    ways.push(way);
+  }
+  return {points,ways};
+}
+
+function readRoadGraph(file){
+  if(!graphs.has(file)){
+    graphs.set(file,fetch(file).then(async response=>{
       if(!response.ok)throw Error('roads');
-      return response.json();
-    }).then(({points,ways})=>{
-      const xy=points.map(([lat,lon])=>P(lat,lon));
-      const next=points.map(()=>[]);
+      const {points,ways}=file.endsWith('.b64') ? decodeDistrict(await response.text()) : await response.json();
+      const xy=points.map(p=>P(...p)), next=points.map(()=>[]);
       for(const [oneway,...ids] of ways){
         for(let i=1;i<ids.length;i++){
           const a=ids[i-1], b=ids[i], length=dist(xy[a],xy[b]);
@@ -685,25 +711,20 @@ function readRoadGraph(){
         }
       }
       return {points,xy,next};
-    }).catch(err=>{graphPromise=null;throw err;});
+    }).catch(err=>{graphs.delete(file);throw err;}));
   }
-  return graphPromise;
+  return graphs.get(file);
 }
-async function detailRoute(start,route,event){
-  const {points,xy,next}=await readRoadGraph();
-  function nearest(pos){
-    let best=-1, distance=Infinity;
-    xy.forEach((v,id)=>{const d=dist(v,pos);if(next[id].length && d<distance){best=id;distance=d;}});
-    return {id:best,distance};
+
+async function detailRoute(start,event,file){
+  const {points,xy,next}=await readRoadGraph(file);
+  const source=P(start.lat,start.lng), destination=P(...CH);
+  let goal=-1,goalDistance=100;
+  for(let id=0;id<xy.length;id++){
+    const gap=dist(xy[id],destination);
+    if(next[id].length && gap<goalDistance){goal=id;goalDistance=gap;}
   }
-  let origin=nearest(P(start.lat,start.lng));
-  const local=origin.distance<100;
-  if(!local){
-    const entries=route.nodes.filter(id=>id!=='ch').map(id=>nearest(PN(id)));
-    origin=entries.find(point=>point.distance<=100) || origin;
-  }
-  const goal=nearest(P(...CH));
-  if(origin.distance>180 || goal.distance>100)return null;
+  if(goal<0)return null;
   const segments=event.segs.flatMap(seg=>segLL(seg)).concat(event.outerTrack?[event.outerTrack]:[]);
   const red=segments.flatMap(line=>{
     const pts=line.map(([lat,lon])=>P(lat,lon));
@@ -717,11 +738,31 @@ async function detailRoute(start,route,event){
     });
   }
   const cost=new Float64Array(points.length).fill(Infinity), prev=new Int32Array(points.length).fill(-1);
-  const open=new Set([origin.id]);cost[origin.id]=0;
+  // Start on a directed street segment near the pin, even between mapped vertices.
+  const seeds=new Map(), open=new Set();
+  let closest=Infinity;
+  const candidates=[];
+  for(let a=0;a<xy.length;a++){
+    for(const [b,length] of next[a]){
+      if(!length || dSeg(source,xy[a],xy[b])>100)continue;
+      if(restricted(xy[a],xy[b]))continue;
+      const dx=xy[b][0]-xy[a][0],dy=xy[b][1]-xy[a][1];
+      const t=Math.max(0,Math.min(1,((source[0]-xy[a][0])*dx+(source[1]-xy[a][1])*dy)/(length*length)));
+      const point=[xy[a][0]+t*dx,xy[a][1]+t*dy],gap=dist(point,source);
+      candidates.push({b,point,gap,along:length*(1-t)});
+      closest=Math.min(closest,gap);
+    }
+  }
+  for(const {b,point,gap,along} of candidates){
+    if(gap>closest+3)continue;
+    const costToRoad=gap+along;
+    if(costToRoad>=cost[b])continue;
+    seeds.set(b,point);cost[b]=costToRoad;open.add(b);
+  }
   while(open.size){
     let id=-1, best=Infinity;
-    for(const k of open){const score=cost[k]+dist(xy[k],xy[goal.id]);if(score<best){id=k;best=score;}}
-    if(id===goal.id)break;
+    for(const k of open){const score=cost[k]+dist(xy[k],xy[goal]);if(score<best){id=k;best=score;}}
+    if(id===goal)break;
     open.delete(id);
     for(const [to,length] of next[id]){
       const total=cost[id]+length;
@@ -729,10 +770,13 @@ async function detailRoute(start,route,event){
       cost[to]=total;prev[to]=id;open.add(to);
     }
   }
-  if(!Number.isFinite(cost[goal.id]))return null;
+  if(!Number.isFinite(cost[goal]))return null;
   const line=[];
-  for(let id=goal.id;id!==-1;id=prev[id])line.push(points[id]);
-  return {line:line.reverse(),local};
+  for(let id=goal;id!==-1;id=prev[id]){
+    line.push(points[id]);
+    if(prev[id]===-1)line.push(UNP(...seeds.get(id)));
+  }
+  return line.reverse();
 }
 // Regional files contain only public approach coordinates. Validate candidates
 // against the selected event on each request, including after a data update.
@@ -843,7 +887,7 @@ async function fullRoute(start, route, event) {
   if (nearestRegion.distance < 5000) {
     const choices = await regionalApproaches(nearestRegion.row);
     for (const line of choices) {
-      if (nearestRegion.distance < 25 && clear(line)) return {line,local:true};
+      if (nearestRegion.distance < 25 && dist(origin,P(...line[0])) <= 150 && clear(line)) return line;
       // Reuse a public approach only when the pin lies very close to its road.
       let best = null, shortest = 15;
       for (let i=1; i<line.length; i++) {
@@ -855,21 +899,27 @@ async function fullRoute(start, route, event) {
       }
       if (best) {
         const suffix=[UNP(...best.point),...line.slice(best.i)];
-        if (clear(suffix)) return {line:suffix,local:true};
+        if (clear(suffix)) return suffix;
       }
     }
   }
-  const local = await detailRoute(start,route,event).catch(()=>null);
-  if (local?.local && clear(local.line)) return local;
+  const files=['roads-seoul-center.json'];
+  if(start.lat>=37.561 && start.lat<=37.606 && start.lng>=126.936 && start.lng<=126.981){
+    files.unshift('jongno-west-roads.b64');
+  }
+  for(const file of files){
+    const local=await detailRoute(start,event,file).catch(()=>null);
+    if(local && clear(local))return local;
+  }
   if (start === externalOrigin) {
-    const ways = [event.pending || !route.entry ? [] : [N(route.entry).slice(1)], [N('dnm').slice(1)]];
+    const ways = [event.pending || !route?.entry ? [] : [N(route.entry).slice(1)], [N('dnm').slice(1)]];
     for (const via of ways) {
-      if (state.start !== start || state.ev !== event) return null;
+      if (externalOrigin !== start || state.start !== start || state.ev !== event) return null;
       const line = await queryDrivingRoute(start,lines,via);
-      if (line && clear(line)) return {line,local:true};
+      if (line && clear(line)) return line;
     }
   }
-  return local && clear(local.line) ? local : null;
+  return null;
 }
 
 function drawMainL(){
@@ -897,25 +947,22 @@ function drawMainL(){
   }
   if(state.start && state.mapView==='all')pts.push([state.start.lat,state.start.lng]);
   else pts.push(N('sjr').slice(1),N('gbg').slice(1));
-  if(r && state.start){
+  if(state.start && (r || ev.pending || ev.id==='none')){
     const layer=m.layer;
     status.textContent='도로 경로를 조회하고 있습니다.';
-    fullRoute(state.start,r,ev).catch(()=>null).then(result=>{
+    fullRoute(state.start,r,ev).catch(()=>null).then(line=>{
       if(m.layer!==layer)return;
-      if(!result){status.textContent=externalOrigin===state.start?'통제를 피하는 전체 경로를 확인하지 못했습니다. 아래 내비게이션에서 확인해 주세요.':'위의 ‘길 찾기’를 눌러 출발지부터의 도로 경로를 조회해 주세요.';return;}
-      const {line,local}=result;
+      if(!line){status.textContent=externalOrigin===state.start?'출발지에서 교회까지 이어지는 우회 경로를 확인하지 못했습니다. 도로 위에 출발지를 다시 찍거나 아래 내비게이션을 이용해 주세요.':'기기에서 출발지까지 연결된 경로를 찾지 못했습니다. 위에서 BRouter 경로 조회를 선택하거나 아래 내비게이션을 이용해 주세요.';return;}
       const origin=[state.start.lat,state.start.lng];
       // Small off-road pin-to-street gaps are access links, never drivable roads.
       function accessLink(a,b){
         if(dist(P(...a),P(...b))>2)L.polyline([a,b],{color:'#15764C',weight:3,dashArray:'2 4',interactive:false}).addTo(layer);
       }
-      if(local) accessLink(origin,line[0]);
-      else L.circleMarker(line[0],{radius:5,color:'#15764C',fillColor:'#fff',fillOpacity:1}).bindTooltip('교회 진입 경로 시작').addTo(layer);
+      accessLink(origin,line[0]);
       accessLink(line[line.length-1],CH);
       L.polyline(line,{color:'#fff',weight:8,interactive:false}).addTo(layer);
       L.polyline(line,{color:'#15764C',weight:5,opacity:1}).addTo(layer);
-      status.textContent=local ? '초록 실선은 도로를 따른 참고 경로입니다. 핀이 도로에서 떨어진 곳은 짧은 점선으로 연결합니다.'
-        : externalOrigin===state.start ? '전체 우회 경로를 확인하지 못해 교회 진입 구간만 표시합니다.' : '교회 진입 구간을 표시했습니다. 위의 ‘길 찾기’를 누르면 출발지부터 조회합니다.';
+      status.textContent='초록 실선은 출발지 인근 도로에서 교회까지 이어지는 참고 경로입니다. 핀과 도로 사이의 짧은 거리는 점선으로 표시합니다.';
       if(state.mapView==='all'){fullBounds=L.latLngBounds([...line,[state.start.lat,state.start.lng],CH]);m.map.fitBounds(fullBounds,{padding:[24,24],maxZoom:16});}
     });
   }
@@ -932,7 +979,7 @@ function drawPickL(){
   if(first){
     setTimeout(()=>{ m.map.invalidateSize(); m.map.fitBounds([[37.45,126.80],[37.69,127.17]]); },30);
     m.map.on('click',ev=>{ state.start={name:'지도에서 찍은 위치',lat:ev.latlng.lat,lng:ev.latlng.lng,custom:true};
-      const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom'; drawPickL(); run(false); });
+      const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom'; drawPickL(); startRouting(false); });
   }
 }
 
@@ -949,7 +996,7 @@ regionSel.onchange=()=>{
   if(!regionSel.value||regionSel.value==='custom') return;
   const [gi,ri]=regionSel.value.split('-').map(Number); const r=REGIONS[gi][1][ri];
   state.start={name:r[0],lat:r[1],lng:r[2]};
-  savePref(); run(true);
+  savePref(); startRouting(true);
 };
 const pickBtn=document.getElementById('pickBtn'), pickWrap=document.getElementById('pickWrap'), pickMap=document.getElementById('pickMap');
 pickBtn.onclick=()=>{ state.picking=!state.picking; pickWrap.classList.toggle('hidden',!state.picking); pickBtn.textContent=state.picking?'지도 닫기':'지도에서 직접 찍기'; if(state.picking) drawPick(); };
@@ -966,7 +1013,7 @@ pickMap.addEventListener('click',evt=>{
   const [lat,lng]=UNP(loc.x,loc.y);
   state.start={name:'지도에서 찍은 위치',lat,lng,custom:true};
   const o=regionSel.querySelector('option[value=custom]'); o.disabled=false; regionSel.value='custom';
-  drawPick(); run(false);
+  drawPick(); startRouting(false);
 });
 
 /* ---------- UI: 시간 (기본: 지금 출발) ---------- */
@@ -987,9 +1034,19 @@ setInterval(()=>{ if(state.dep==null) renderTimeAuto(); },30000);
 /* ---------- 실행 ---------- */
 document.getElementById('goBtn').onclick=()=>{
   if(!state.start){ gmsg('현재 위치를 확인하거나 지도에서 출발지를 선택해 주세요.',true); geoBtn.focus(); return; }
-  externalOrigin=state.start;
-  run(true);
+  startRouting(true);
 };
+document.getElementById('allowExternal').onchange=()=>{
+  if(state.start) startRouting(false);
+};
+function startRouting(scroll){
+  externalOrigin=document.getElementById('allowExternal').checked ? state.start : null;
+  state.mapView='all';
+  document.querySelectorAll('[data-mv]').forEach(button=>{
+    button.classList.toggle('on',button.dataset.mv==='all');
+  });
+  run(scroll);
+}
 function run(scroll){
   document.getElementById('resultSchedule').innerHTML='';
   document.getElementById('roadStatus').textContent='';
@@ -1011,7 +1068,7 @@ function run(scroll){
     document.querySelectorAll('[data-mv]').forEach(button=>{
       button.classList.toggle('on',button.dataset.mv===state.mapView);
     });
-    document.getElementById('resultBody').innerHTML='<div class="result-head">종교교회까지의 참고 경로</div><div class="note">'+(state.preview?'선택한 출발지와 교회 진입 지점을 기준으로 차량 경로를 조회합니다.':'참고 경로를 계산하지 못했습니다.')+' 실제 통행 가능 여부는 내비게이션에서 확인해 주세요.</div>';
+    document.getElementById('resultBody').innerHTML='<div class="result-head">종교교회까지의 참고 경로</div><div class="note">선택한 출발지에서 종교교회까지 차량 경로를 조회합니다. 실제 통행 가능 여부는 내비게이션에서 확인해 주세요.</div>';
     document.getElementById('liveBox').classList.add('hidden');
     document.getElementById('resultMapArea').classList.remove('hidden');
     document.getElementById('resultLegend').innerHTML='<span><i style="background:var(--route)"></i>참고 경로</span>'+(ev.segs.length?'<span><i style="background:var(--stop)"></i>통제 예정 구간 (확인된 일부)</span>':'<span>등록된 통제 구간 없음</span>');
@@ -1433,12 +1490,11 @@ geoBtn.onclick=()=>{
     const o=regionSel.querySelector('option[value=geo]'); o.disabled=false; regionSel.value='geo';
     const km=Math.hypot((lng-LNG0)*MX,(LAT0-lat)*MY)/1000;
     gmsg(km>60?'교회에서 꽤 먼 곳이에요. 길안내는 카카오맵에서 확인해 주세요.':`내 위치를 찾았어요 (교회까지 직선 ${km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km'}).`, km>60);
-    if(!state.picking){} 
-    run(true);
+    startRouting(true);
   },err=>{
     geoBtn.disabled=false; geoBtn.textContent='📍 지금 내 위치에서 출발';
     gmsg(err.code===1?'위치 권한이 꺼져 있어요. 휴대폰 설정에서 위치 권한을 허용하거나, 지도에서 출발지를 선택해 주세요.':'위치를 찾지 못했어요. 지도에서 출발지를 선택해 주세요.',true);
-  },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 };
 /* ---------- 공유 ---------- */
 document.getElementById('shareBtn').onclick=async()=>{
