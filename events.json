@@ -286,6 +286,14 @@
         {
           "t": "서울시설공단 안내",
           "u": "https://www.sisul.or.kr/open_content/childrenpark/bbs/bbsMsgDetail.do?bcd=notice&msg_seq=8940"
+        },
+        {
+          "t": "서울시 TOPIS 11월 11일 공지 · 첨부 교통통제계획",
+          "u": "https://topis.seoul.go.kr/notice/openNoticeView.do?blbdDivCd=02&bdwrSeq=6309"
+        },
+        {
+          "t": "성동구 버스 우회 공지",
+          "u": "https://sd.go.kr/main/selectBbsNttView.do?bbsNo=183&key=1472&nttNo=363011"
         }
       ],
       "segs": [
@@ -1187,7 +1195,9 @@
         "광화문광장 04:00~09:00",
         "세종대로사거리~흥인지문 07:20~09:15",
         "세부 차로와 우회 진입은 확인 중"
-      ]
+      ],
+      "impact": "11월 11일 TOPIS 본문에는 올림픽공원이 기재됐으나, 같은 공지의 첨부 계획과 주최 측 안내가 일치하는 하프 도착지는 잠실종합운동장 동문입니다.",
+      "busDetours": "성동구 11월 11일 공지 기준 시내버스 52개 운수사 150개 노선 임시 우회 예정. 개별 정류소·시간은 노선별 공지를 확인하세요."
     },
     {
       "id": "freedom2026",
@@ -1231,6 +1241,178 @@
       ],
       "impact": "동대문~종로~광화문, 서울광장·숭례문 일대 통제에 따른 버스 우회 예정",
       "busDetours": "271번 07:30~09:00 · 370번 07:10~08:30 · 6002번 07:20~08:40"
+    },
+    {
+      "id": "central-road-2026-11-12",
+      "date": "2026-11-12",
+      "name": "서울시청 주변 도로 통제",
+      "summary": "서울광장 인접 도로 · TOPIS 통제 안내",
+      "pending": true,
+      "segs": [],
+      "notice": [
+        "을지로 시청앞광장 → 서울프라자호텔 · 하위차로 공사 · 06:56~22:00",
+        "덕수궁길 대한문 ↔ 원형분수대 · 양방향 · 11:00~14:00"
+      ],
+      "sources": [
+        {
+          "t": "서울시 TOPIS 1109935",
+          "u": "https://topis.seoul.go.kr/?accId=1109935"
+        },
+        {
+          "t": "서울시 TOPIS 1109261",
+          "u": "https://topis.seoul.go.kr/?accId=1109261"
+        }
+      ],
+      "scheduleTitle": "구간별 통제 예정 시간",
+      "schedule": [
+        [
+          "을지로 시청앞광장 → 서울프라자호텔 · 하위차로 공사",
+          "06:56",
+          "22:00"
+        ],
+        [
+          "덕수궁길 대한문 ↔ 원형분수대 · 양방향",
+          "11:00",
+          "14:00"
+        ]
+      ]
+    },
+    {
+      "id": "central-road-2026-11-13",
+      "date": "2026-11-13",
+      "name": "덕수궁길 차 없는 거리",
+      "summary": "서울광장 인접 도로 · TOPIS 통제 안내",
+      "pending": true,
+      "segs": [],
+      "notice": [
+        "덕수궁길 대한문 ↔ 원형분수대 · 양방향 · 11:00~14:00"
+      ],
+      "sources": [
+        {
+          "t": "서울시 TOPIS 1109262",
+          "u": "https://topis.seoul.go.kr/?accId=1109262"
+        }
+      ],
+      "scheduleTitle": "구간별 통제 예정 시간",
+      "schedule": [
+        [
+          "덕수궁길 대한문 ↔ 원형분수대 · 양방향",
+          "11:00",
+          "14:00"
+        ]
+      ]
+    },
+    {
+      "id": "central-road-2026-11-14",
+      "date": "2026-11-14",
+      "name": "덕수궁길·청계천로 차 없는 거리",
+      "summary": "서울광장 인접 도로 · TOPIS 통제 안내",
+      "pending": true,
+      "segs": [],
+      "notice": [
+        "덕수궁길 대한문 ↔ 원형분수대 · 양방향 · 10:00~18:00",
+        "청계천로 청계광장 ↔ 삼일교 · 양방향 · 11/14 14:00~11/15 22:00"
+      ],
+      "sources": [
+        {
+          "t": "서울시 TOPIS 1109263",
+          "u": "https://topis.seoul.go.kr/?accId=1109263"
+        },
+        {
+          "t": "서울시 TOPIS 1109266",
+          "u": "https://topis.seoul.go.kr/?accId=1109266"
+        }
+      ],
+      "scheduleTitle": "구간별 통제 예정 시간",
+      "schedule": [
+        [
+          "덕수궁길 대한문 ↔ 원형분수대 · 양방향",
+          "10:00",
+          "18:00"
+        ],
+        [
+          "청계천로 청계광장 ↔ 삼일교 · 양방향",
+          "11/14 14:00",
+          "11/15 22:00"
+        ]
+      ]
+    },
+    {
+      "id": "central-road-2026-11-15",
+      "date": "2026-11-15",
+      "name": "덕수궁길·청계천로 차 없는 거리",
+      "summary": "서울광장 인접 도로 · TOPIS 통제 안내",
+      "pending": true,
+      "segs": [],
+      "notice": [
+        "덕수궁길 대한문 ↔ 원형분수대 · 양방향 · 12:00~18:00",
+        "청계천로 청계광장 ↔ 삼일교 · 양방향 · 11/14 14:00~11/15 22:00"
+      ],
+      "sources": [
+        {
+          "t": "서울시 TOPIS 1109264",
+          "u": "https://topis.seoul.go.kr/?accId=1109264"
+        },
+        {
+          "t": "서울시 TOPIS 1109266",
+          "u": "https://topis.seoul.go.kr/?accId=1109266"
+        }
+      ],
+      "scheduleTitle": "구간별 통제 예정 시간",
+      "schedule": [
+        [
+          "덕수궁길 대한문 ↔ 원형분수대 · 양방향",
+          "12:00",
+          "18:00"
+        ],
+        [
+          "청계천로 청계광장 ↔ 삼일교 · 양방향",
+          "11/14 14:00",
+          "11/15 22:00"
+        ]
+      ]
+    },
+    {
+      "id": "central-road-2026-11-16",
+      "date": "2026-11-16",
+      "name": "덕수궁길 차 없는 거리",
+      "summary": "서울광장 인접 도로 · TOPIS 통제 안내",
+      "pending": true,
+      "segs": [],
+      "notice": [
+        "덕수궁길 대한문 ↔ 원형분수대 · 양방향 · 11:00~14:00"
+      ],
+      "sources": [
+        {
+          "t": "서울시 TOPIS 1109265",
+          "u": "https://topis.seoul.go.kr/?accId=1109265"
+        }
+      ],
+      "scheduleTitle": "구간별 통제 예정 시간",
+      "schedule": [
+        [
+          "덕수궁길 대한문 ↔ 원형분수대 · 양방향",
+          "11:00",
+          "14:00"
+        ]
+      ]
+    },
+    {
+      "id": "gwanghwamun-light-opening-2026",
+      "date": "2026-12-11",
+      "name": "서울라이트 광화문 개막",
+      "pending": true,
+      "segs": [],
+      "summary": "광화문광장 · 전시 기간 12월 11일~2027년 1월 3일",
+      "notice": [
+        "광장 행사 일정 확인 · 인접 도로 차량 통제 여부 미확인"
+      ],
+      "sources": [
+        {
+          "t": "서울시 축제 공식 안내",
+          "u": "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=372"
+        }
+      ]
     }
   ]
 }
